@@ -1,0 +1,101 @@
+2:06:08 Microsoft.Shutdown.TabStripModel.CloseWebContentses
+2:06:08 Microsoft.Shutdown.TabStripModel.CloseWebContentses_FastShutdown
+2:06:08 Tab1 RenderProcessGone
+2:06:08 Microsoft.UnloadController.ClearUnloadState
+2:06:08 Microsoft.Shutdown.TabStripModel.RunUnloadListenerBeforeClosing_false
+2:06:08 Microsoft.Shutdown.TabStripModel.InternalCloseTabsImpl_ClosedAll
+2:06:08 Microsoft.Shutdown.TabStripModel.SendDetachWebContentsNotifications
+2:06:08 Microsoft.UnloadController.ClearUnloadState
+2:06:08 Browser1 Close Tab1 at 0
+2:06:08 Microsoft.Shutdown.OnWindowClosing
+2:06:08 Microsoft.UnloadController.IsUnclosableApp_IsNotWebApp
+2:06:08 Microsoft.UnloadController.HasCompletedUnloadProcessing_True
+2:06:08 Microsoft.Shutdown.OnWindowClosing_MaybeClearBrowsingDataOnExit
+2:06:08 Microsoft.Shutdown.OnWindowClosing_ClearBrowsingDataOnExitNotInProgress
+2:06:08 Microsoft.Shutdown.OnWindowClosingPostClearBrowsingData_NoBrowsingDataCleared
+2:06:08 Widget Closed: WebView2MinimalFrame
+2:06:08 Microsoft.UnloadController.TabStripEmpty
+2:06:08 Widget Closed: WebView2MinimalFrame
+2:06:08 Microsoft.UnloadController.HasCompletedUnloadProcessing_True
+2:06:08 Microsoft.Shutdown.OnWindowClosing
+2:06:08 Microsoft.Shutdown.OnWindowClosing_DeleteScheduled
+2:06:08 Microsoft.Browser_Removed
+2:06:08 Widget Closed: WebView2MinimalFrame
+2:06:10 Memory Pressure: Moderate
+2:06:20 Memory Pressure: Moderate
+2:06:30 Memory Pressure: Moderate
+2:06:40 Memory Pressure: Moderate
+2:06:50 Memory Pressure: Moderate
+2:07:00 Memory Pressure: Moderate
+2:07:10 Memory Pressure: Moderate
+2:07:20 Memory Pressure: Moderate
+2:07:30 Memory Pressure: Moderate
+2:07:40 Memory Pressure: Moderate
+2:07:50 Memory Pressure: Moderate
+2:08:00 Memory Pressure: Moderate
+2:08:10 Memory Pressure: Moderate
+2:08:20 Memory Pressure: Moderate
+2:08:30 Memory Pressure: Moderate
+2:08:40 Memory Pressure: Moderate
+2:08:50 Memory Pressure: Moderate
+2:09:00 Memory Pressure: Moderate
+2:09:10 Memory Pressure: Moderate
+2:09:20 Memory Pressure: Moderate
+2:09:30 Memory Pressure: Moderate
+2:09:40 Memory Pressure: Moderate
+2:09:50 Memory Pressure: Moderate
+2:10:00 Memory Pressure: Moderate
+2:10:10 Memory Pressure: Moderate
+2:10:20 Memory Pressure: Moderate
+2:10:25 Memory Pressure: None
+2:14:31 Memory Pressure: Moderate
+2:14:41 Memory Pressure: Moderate
+2:14:51 Memory Pressure: Moderate
+2:15:01 Memory Pressure: Moderate
+2:15:11 Memory Pressure: Moderate
+2:15:21 Memory Pressure: Moderate
+2:15:31 Memory Pressure: Moderate
+2:15:41 Memory Pressure: Moderate
+2:15:51 Memory Pressure: Moderate
+2:16:01 Memory Pressure: Moderate
+2:16:11 Memory Pressure: Moderate
+2:16:21 Memory Pressure: Moderate
+2:16:31 Memory Pressure: Moderate
+2:16:41 Memory Pressure: Moderate
+2:16:51 Memory Pressure: Moderate
+2:17:01 Memory Pressure: Moderate
+2:17:11 Memory Pressure: Moderate
+2:17:21 Memory Pressure: Moderate
+2:17:31 Memory Pressure: Moderate
+2:17:41 Memory Pressure: None
+2:18:21 Memory Pressure: Moderate
+2:18:26 Memory Pressure: None
+2:19:31 Memory Pressure: Moderate
+2:19:36 Memory Pressure: None
+2:20:01 Memory Pressure: Moderate
+2:20:06 Memory Pressure: None
+2:20:11 Memory Pressure: Moderate
+2:20:21 Memory Pressure: Moderate
+2:20:26 Memory Pressure: None
+2:20:31 Memory Pressure: Moderate
+2:20:41 Memory Pressure: Moderate
+2:20:51 Memory Pressure: Moderate
+2:21:01 Memory Pressure: Moderate
+2:21:11 Memory Pressure: Moderate
+2:21:21 Memory Pressure: Moderate
+2:21:31 Memory Pressure: Moderate
+2:21:41 Memory Pressure: Moderate
+2:21:51 Memory Pressure: Moderate
+2:22:01 Memory Pressure: Moderate
+2:22:11 Memory Pressure: Moderate
+2:22:21 Memory Pressure: Moderate
+2:22:31 Memory Pressure: Moderate
+2:22:36 Memory Pressure: None
+2:25:07 Memory Pressure: Moderate
+2:25:17 Memory Pressure: Moderate
+2:25:27 Memory Pressure: None
+2:25:32 Memory Pressure: Moderate
+2:25:37 Memory Pressure: None
+4:42:11 Memory Pressure: Moderate
+4:42:16 Memory Pressure: None
+4:42:45 Microsoft.Shutdown.OnWindowClosing

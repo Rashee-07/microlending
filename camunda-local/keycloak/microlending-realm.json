@@ -1,0 +1,118 @@
+{
+  "realm": "microlending",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "USER"
+      },
+      {
+        "name": "REVIEWER"
+      },
+      {
+        "name": "MANAGER"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "microlending-login",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "priya",
+      "enabled": true,
+      "firstName": "Priya",
+      "lastName": "Sharma",
+      "email": "priya@microlending.local",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "priya123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "USER"
+      ]
+    },
+    {
+      "username": "rahul",
+      "enabled": true,
+      "firstName": "Rahul",
+      "lastName": "Verma",
+      "email": "rahul@microlending.local",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "rahul123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "USER"
+      ]
+    },
+    {
+      "username": "anita",
+      "enabled": true,
+      "firstName": "Anita",
+      "lastName": "Rao",
+      "email": "anita@microlending.local",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "anita123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "USER"
+      ]
+    },
+    {
+      "username": "kiran",
+      "enabled": true,
+      "firstName": "Kiran",
+      "lastName": "Kumar",
+      "email": "kiran@microlending.local",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "kiran123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "REVIEWER"
+      ]
+    },
+    {
+      "username": "suresh",
+      "enabled": true,
+      "firstName": "Suresh",
+      "lastName": "Reddy",
+      "email": "suresh@microlending.local",
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "suresh123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "MANAGER"
+      ]
+    }
+  ]
+}
