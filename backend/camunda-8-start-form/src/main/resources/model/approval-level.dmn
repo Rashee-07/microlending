@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- UC03: does the loan need a senior approval on top of the credit officer? (demo rules) -->
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_approval_level" name="Approval level" namespace="http://camunda.org/schema/1.0/dmn" exporter="MicroLending" exporterVersion="1.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.3.0">
+  <decision id="approval-level" name="Approval level">
+    <decisionTable id="DecisionTable_approval" hitPolicy="FIRST">
+      <input id="in_amount" label="Loan amount (AUD)">
+        <inputExpression id="ie_amount" typeRef="number"><text>loanAmount</text></inputExpression>
+      </input>
+      <input id="in_risk" label="Risk category">
+        <inputExpression id="ie_risk" typeRef="string"><text>riskCategory</text></inputExpression>
+      </input>
+      <output id="out_level" label="Approval level" name="approvalLevel" typeRef="string" />
+      <rule id="a1_amount">
+        <description>Large loans need a senior approver</description>
+        <inputEntry id="a1_i1"><text>&gt; 10000</text></inputEntry>
+        <inputEntry id="a1_i2"><text>-</text></inputEntry>
+        <outputEntry id="a1_o1"><text>"SENIOR"</text></outputEntry>
+      </rule>
+      <rule id="a2_risk">
+        <description>High-risk applications need a senior approver</description>
+        <inputEntry id="a2_i1"><text>-</text></inputEntry>
+        <inputEntry id="a2_i2"><text>"HIGH"</text></inputEntry>
+        <outputEntry id="a2_o1"><text>"SENIOR"</text></outputEntry>
+      </rule>
+      <rule id="a3_standard">
+        <description>Everything else: credit officer only</description>
+        <inputEntry id="a3_i1"><text>-</text></inputEntry>
+        <inputEntry id="a3_i2"><text>-</text></inputEntry>
+        <outputEntry id="a3_o1"><text>"STANDARD"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_approval">
+      <dmndi:DMNShape id="DMNShape_approval" dmnElementRef="approval-level">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

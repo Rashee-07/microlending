@@ -1,13 +1,8 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
-// Page for each role
-const HOME_PAGE = {
-  USER: "/Pages/User",
-  REVIEWER: "/Pages/Reviewer",
-  MANAGER: "/Pages/Manager",
-};
+import { api, errorMessage } from "./api/client";
+import { saveUser } from "./session";
+import { HOME_PAGE } from "./constants/roles";
 
 function Login(props) {
   const [name, setName] = useState("");
@@ -22,23 +17,15 @@ function Login(props) {
     setError("");
     setLoading(true);
 
-    axios
-      .post("http://localhost:8898/login", { username: name, password: password })
-      .then((response) => {
+    api
+      .login(name, password)
+      .then((user) => {
         // Remember who is logged in and their role
-        localStorage.setItem("username", response.data.username);
-        localStorage.setItem("role", response.data.role);
-        localStorage.setItem("name", response.data.name || response.data.username);
+        saveUser(user);
         props.status(false);
-        navigate(HOME_PAGE[response.data.role] || "/");
+        navigate(HOME_PAGE[user.role] || "/");
       })
-      .catch((err) => {
-        if (err.response && err.response.data && err.response.data.message) {
-          setError(err.response.data.message);
-        } else {
-          setError("Cannot reach the server");
-        }
-      })
+      .catch((err) => setError(errorMessage(err)))
       .finally(() => setLoading(false));
   };
 
@@ -47,14 +34,14 @@ function Login(props) {
       {/* Left side: brand panel */}
       <div className="loginHero">
         <div className="sidebarBrand big">
-          <span className="logo">₹</span> MicroLending
+          <span className="logo">$</span> MicroLending
         </div>
         <h1>Small loans, simple process.</h1>
-        <p>Apply, review and approve loans in one place.</p>
+        <p>From application to the last repayment - in one place.</p>
         <ul>
-          <li>📝 Applicants apply for a loan in minutes</li>
-          <li>🔍 Reviewers check every application</li>
-          <li>✅ Approvers approve or reject</li>
+          <li>📝 Apply online and verify your identity in minutes</li>
+          <li>📊 Automated credit and affordability check</li>
+          <li>✍️ Sign electronically, get paid, repay by direct debit</li>
         </ul>
       </div>
 

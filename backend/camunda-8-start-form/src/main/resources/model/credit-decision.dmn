@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- UC02 credit decision. Illustrative demo rules only - not a substitute for the lender's approved credit policy.
+     Hit policy FIRST: rules are checked top to bottom, the first match wins. -->
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_credit_decision" name="Credit decision" namespace="http://camunda.org/schema/1.0/dmn" exporter="MicroLending" exporterVersion="1.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.3.0">
+  <decision id="credit-decision" name="Credit decision">
+    <decisionTable id="DecisionTable_credit" hitPolicy="FIRST">
+      <input id="in_fraud" label="Fraud risk">
+        <inputExpression id="ie_fraud" typeRef="string"><text>fraudRisk</text></inputExpression>
+      </input>
+      <input id="in_info" label="Financial information complete &amp; consistent">
+        <inputExpression id="ie_info" typeRef="boolean"><text>infoComplete</text></inputExpression>
+      </input>
+      <input id="in_surplus" label="Monthly surplus after repayment (AUD)">
+        <inputExpression id="ie_surplus" typeRef="number"><text>surplus</text></inputExpression>
+      </input>
+      <input id="in_dti" label="Debt-to-income ratio">
+        <inputExpression id="ie_dti" typeRef="number"><text>dti</text></inputExpression>
+      </input>
+      <input id="in_score" label="Credit score">
+        <inputExpression id="ie_score" typeRef="number"><text>creditScore</text></inputExpression>
+      </input>
+      <output id="out_outcome" label="Outcome" name="outcome" typeRef="string" />
+      <output id="out_reason" label="Reason" name="reason" typeRef="string" />
+      <output id="out_risk" label="Risk category" name="riskCategory" typeRef="string" />
+
+      <rule id="r1_fraud">
+        <description>High-risk fraud indicator</description>
+        <inputEntry id="r1_i1"><text>"HIGH"</text></inputEntry>
+        <inputEntry id="r1_i2"><text>-</text></inputEntry>
+        <inputEntry id="r1_i3"><text>-</text></inputEntry>
+        <inputEntry id="r1_i4"><text>-</text></inputEntry>
+        <inputEntry id="r1_i5"><text>-</text></inputEntry>
+        <outputEntry id="r1_o1"><text>"FRAUD"</text></outputEntry>
+        <outputEntry id="r1_o2"><text>"High-risk fraud indicator - sent for fraud investigation"</text></outputEntry>
+        <outputEntry id="r1_o3"><text>"HIGH"</text></outputEntry>
+      </rule>
+      <rule id="r2_info">
+        <description>Missing or inconsistent financial information</description>
+        <inputEntry id="r2_i1"><text>-</text></inputEntry>
+        <inputEntry id="r2_i2"><text>false</text></inputEntry>
+        <inputEntry id="r2_i3"><text>-</text></inputEntry>
+        <inputEntry id="r2_i4"><text>-</text></inputEntry>
+        <inputEntry id="r2_i5"><text>-</text></inputEntry>
+        <outputEntry id="r2_o1"><text>"REFER"</text></outputEntry>
+        <outputEntry id="r2_o2"><text>"Missing or inconsistent financial information - manual review"</text></outputEntry>
+        <outputEntry id="r2_o3"><text>"MEDIUM"</text></outputEntry>
+      </rule>
+      <rule id="r3_hardship_surplus">
+        <description>No money left after the repayment</description>
+        <inputEntry id="r3_i1"><text>-</text></inputEntry>
+        <inputEntry id="r3_i2"><text>-</text></inputEntry>
+        <inputEntry id="r3_i3"><text>&lt; 0</text></inputEntry>
+        <inputEntry id="r3_i4"><text>-</text></inputEntry>
+        <inputEntry id="r3_i5"><text>-</text></inputEntry>
+        <outputEntry id="r3_o1"><text>"DECLINE"</text></outputEntry>
+        <outputEntry id="r3_o2"><text>"Repayments would cause substantial financial hardship (expenses exceed income after repayment)"</text></outputEntry>
+        <outputEntry id="r3_o3"><text>"HIGH"</text></outputEntry>
+      </rule>
+      <rule id="r4_hardship_dti">
+        <description>Debt-to-income above 50%</description>
+        <inputEntry id="r4_i1"><text>-</text></inputEntry>
+        <inputEntry id="r4_i2"><text>-</text></inputEntry>
+        <inputEntry id="r4_i3"><text>-</text></inputEntry>
+        <inputEntry id="r4_i4"><text>&gt; 0.5</text></inputEntry>
+        <inputEntry id="r4_i5"><text>-</text></inputEntry>
+        <outputEntry id="r4_o1"><text>"DECLINE"</text></outputEntry>
+        <outputEntry id="r4_o2"><text>"Debt-to-income ratio above 50% - repayments would cause substantial financial hardship"</text></outputEntry>
+        <outputEntry id="r4_o3"><text>"HIGH"</text></outputEntry>
+      </rule>
+      <rule id="r5_low_score">
+        <description>Weak credit history</description>
+        <inputEntry id="r5_i1"><text>-</text></inputEntry>
+        <inputEntry id="r5_i2"><text>-</text></inputEntry>
+        <inputEntry id="r5_i3"><text>-</text></inputEntry>
+        <inputEntry id="r5_i4"><text>-</text></inputEntry>
+        <inputEntry id="r5_i5"><text>&lt; 500</text></inputEntry>
+        <outputEntry id="r5_o1"><text>"REFER"</text></outputEntry>
+        <outputEntry id="r5_o2"><text>"Low credit score - manual assessment required"</text></outputEntry>
+        <outputEntry id="r5_o3"><text>"HIGH"</text></outputEntry>
+      </rule>
+      <rule id="r6_approve_low">
+        <description>Verified income, comfortably affordable, good credit</description>
+        <inputEntry id="r6_i1"><text>-</text></inputEntry>
+        <inputEntry id="r6_i2"><text>-</text></inputEntry>
+        <inputEntry id="r6_i3"><text>&gt;= 200</text></inputEntry>
+        <inputEntry id="r6_i4"><text>&lt;= 0.4</text></inputEntry>
+        <inputEntry id="r6_i5"><text>&gt;= 650</text></inputEntry>
+        <outputEntry id="r6_o1"><text>"APPROVE"</text></outputEntry>
+        <outputEntry id="r6_o2"><text>"Verified income and affordability within policy"</text></outputEntry>
+        <outputEntry id="r6_o3"><text>"LOW"</text></outputEntry>
+      </rule>
+      <rule id="r7_approve_medium">
+        <description>Verified income and affordable</description>
+        <inputEntry id="r7_i1"><text>-</text></inputEntry>
+        <inputEntry id="r7_i2"><text>-</text></inputEntry>
+        <inputEntry id="r7_i3"><text>&gt;= 0</text></inputEntry>
+        <inputEntry id="r7_i4"><text>&lt;= 0.4</text></inputEntry>
+        <inputEntry id="r7_i5"><text>-</text></inputEntry>
+        <outputEntry id="r7_o1"><text>"APPROVE"</text></outputEntry>
+        <outputEntry id="r7_o2"><text>"Verified income and affordability within policy"</text></outputEntry>
+        <outputEntry id="r7_o3"><text>"MEDIUM"</text></outputEntry>
+      </rule>
+      <rule id="r8_marginal">
+        <description>Everything else (DTI 40-50%)</description>
+        <inputEntry id="r8_i1"><text>-</text></inputEntry>
+        <inputEntry id="r8_i2"><text>-</text></inputEntry>
+        <inputEntry id="r8_i3"><text>-</text></inputEntry>
+        <inputEntry id="r8_i4"><text>-</text></inputEntry>
+        <inputEntry id="r8_i5"><text>-</text></inputEntry>
+        <outputEntry id="r8_o1"><text>"REFER"</text></outputEntry>
+        <outputEntry id="r8_o2"><text>"Affordability is marginal - manual assessment required"</text></outputEntry>
+        <outputEntry id="r8_o3"><text>"MEDIUM"</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_credit">
+      <dmndi:DMNShape id="DMNShape_credit" dmnElementRef="credit-decision">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

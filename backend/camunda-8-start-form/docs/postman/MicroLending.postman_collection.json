@@ -1,0 +1,3637 @@
+{
+  "info": {
+    "name": "MicroLending - UC01-UC04 loan life cycle",
+    "description": "REST API of the MicroLending demo backend (Spring Boot + Camunda 8).\n\nHow to use:\n1. Start Docker (camunda-local), the backend (port 8898).\n2. Run a folder top to bottom. Register / quick-start requests save {{applicationId}};\n   task requests find their own {{jobKey}}.\n3. Watch the process in Operate (http://localhost:8081) and the customer screens at http://localhost:3077.\n\nDemo triggers: see backend docs/DEMO-TRIGGERS.md (e.g. ID number ending 000 = identity failure, last name Fraud = fraud alert).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8898"
+    },
+    {
+      "key": "customer",
+      "value": "priya"
+    },
+    {
+      "key": "applicationId",
+      "value": ""
+    },
+    {
+      "key": "jobKey",
+      "value": ""
+    },
+    {
+      "key": "dupEmail",
+      "value": ""
+    },
+    {
+      "key": "dupMobile",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Login",
+      "description": "Keycloak users: priya / rahul / anita (customer), kiran (credit officer), suresh (senior approver, collections, operations).",
+      "item": [
+        {
+          "name": "Login - customer (priya)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"priya\",\n  \"password\": \"priya123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - credit officer (kiran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kiran\",\n  \"password\": \"kiran123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - senior approver (suresh)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"suresh\",\n  \"password\": \"suresh123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - wrong password (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"priya\",\n  \"password\": \"wrong\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. UC01 - Application & onboarding",
+      "description": "Run top to bottom. Includes two exceptions: expired ID (re-upload) and missing income document.",
+      "item": [
+        {
+          "name": "Register (email + mobile) - starts the process",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"email\": \"{{customer}}.{{$timestamp}}@example.com\",\n  \"mobile\": \"04{{$randomInt}}0000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get application (status + open tasks)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Everything about {{applicationId}}. The Postman console shows the status and the open tasks."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const r = pm.response.json();",
+                  "console.log(\"status:\", r.application.status, \"|\", r.application.statusReason || \"\", \"| open tasks:\", r.openTasks.map(t => t.elementId).join(\", \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Enter personal, address & employment details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"firstName\": \"Priya\",\n    \"lastName\": \"Sharma\",\n    \"dateOfBirth\": \"1990-04-12\",\n    \"addressLine\": \"12 George Street\",\n    \"suburb\": \"Sydney\",\n    \"state\": \"NSW\",\n    \"postcode\": \"2000\",\n    \"employmentStatus\": \"FULL_TIME\",\n    \"employerName\": \"Harbour Logistics Pty Ltd\",\n    \"employmentYears\": 4\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `capture-details` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"capture-details\" task of this application and remember its jobKey",
+                  "const element = \"capture-details\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload identity document - EXPIRED (exception)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"idType\": \"DRIVERS_LICENCE\",\n    \"idNumber\": \"DL{{$randomInt}}55\",\n    \"idExpiry\": \"2023-01-31\",\n    \"fileName\": \"licence.jpg\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Expiry date in the past: the process asks for a new document (status ID_REUPLOAD_REQUIRED).\n\nCompletes the open task `upload-identity` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"upload-identity\" task of this application and remember its jobKey",
+                  "const element = \"upload-identity\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload identity document - valid passport",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"idType\": \"PASSPORT\",\n    \"idNumber\": \"PA{{$randomInt}}77\",\n    \"idExpiry\": \"2031-06-30\",\n    \"fileName\": \"passport.jpg\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Tip: an ID number ending in 000 fails verification and the application is rejected.\n\nCompletes the open task `upload-identity` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"upload-identity\" task of this application and remember its jobKey",
+                  "const element = \"upload-identity\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Enter income, expenses, debts & loan purpose (no payslip)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"loanAmount\": 3000,\n    \"loanPurpose\": \"Emergency expense\",\n    \"termMonths\": 12,\n    \"monthlyIncome\": 5200,\n    \"monthlyExpenses\": 2400,\n    \"monthlyLiabilities\": 300,\n    \"bankAccountNumber\": \"062000123456\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "No income document: validation asks for it (status INFO_REQUIRED). Add \"incomeDocType\":\"PAYSLIP\",\"incomeDocFileName\":\"payslip.pdf\" to skip that step.\n\nCompletes the open task `capture-financials` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"capture-financials\" task of this application and remember its jobKey",
+                  "const element = \"capture-financials\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload missing income document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"incomeDocType\": \"PAYSLIP\",\n    \"incomeDocFileName\": \"payslip-october.pdf\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "After this UC02 runs automatically (a few seconds). Then UC03 waits for the credit officer.\n\nCompletes the open task `upload-income-docs` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"upload-income-docs\" task of this application and remember its jobKey",
+                  "const element = \"upload-income-docs\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get application (expect PENDING_APPROVAL)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Everything about {{applicationId}}. The Postman console shows the status and the open tasks."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const r = pm.response.json();",
+                  "console.log(\"status:\", r.application.status, \"|\", r.application.statusReason || \"\", \"| open tasks:\", r.openTasks.map(t => t.elementId).join(\", \"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1b. UC01 - exceptions",
+      "description": "Run top to bottom. A: identity verification fails. B: duplicate application (same email + mobile as an active application).",
+      "item": [
+        {
+          "name": "A1. Register - identity failure scenario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"email\": \"{{customer}}.idfail.{{$timestamp}}@example.com\",\n  \"mobile\": \"04{{$randomInt}}1111\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A2. Enter personal details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"firstName\": \"Priya\",\n    \"lastName\": \"Sharma\",\n    \"dateOfBirth\": \"1990-04-12\",\n    \"addressLine\": \"12 George Street\",\n    \"suburb\": \"Sydney\",\n    \"state\": \"NSW\",\n    \"postcode\": \"2000\",\n    \"employmentStatus\": \"FULL_TIME\",\n    \"employerName\": \"Harbour Logistics Pty Ltd\",\n    \"employmentYears\": 4\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `capture-details` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"capture-details\" task of this application and remember its jobKey",
+                  "const element = \"capture-details\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A3. Upload identity document - number ending 000 (FAILS)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"idType\": \"PASSPORT\",\n    \"idNumber\": \"PA{{$randomInt}}000\",\n    \"idExpiry\": \"2031-06-30\",\n    \"fileName\": \"passport.jpg\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "ID number ending in 000: the identity service cannot verify the person, so the application is rejected and the customer notified.\n\nCompletes the open task `upload-identity` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"upload-identity\" task of this application and remember its jobKey",
+                  "const element = \"upload-identity\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A4. Get application (expect REJECTED - identity not verified)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Everything about {{applicationId}}. The Postman console shows the status and the open tasks."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const r = pm.response.json();",
+                  "console.log(\"status:\", r.application.status, \"|\", r.application.statusReason || \"\", \"| open tasks:\", r.openTasks.map(t => t.elementId).join(\", \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "B1. Register FIRST application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"email\": \"{{dupEmail}}\",\n  \"mobile\": \"{{dupMobile}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// one email + mobile for both registrations of this scenario",
+                  "pm.collectionVariables.set(\"dupEmail\", pm.collectionVariables.get(\"customer\") + \".dup.\" + Date.now() + \"@example.com\");",
+                  "pm.collectionVariables.set(\"dupMobile\", \"04\" + String(Date.now()).slice(-8));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "B2. First application - personal details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"firstName\": \"Priya\",\n    \"lastName\": \"Sharma\",\n    \"dateOfBirth\": \"1990-04-12\",\n    \"addressLine\": \"12 George Street\",\n    \"suburb\": \"Sydney\",\n    \"state\": \"NSW\",\n    \"postcode\": \"2000\",\n    \"employmentStatus\": \"FULL_TIME\",\n    \"employerName\": \"Harbour Logistics Pty Ltd\",\n    \"employmentYears\": 4\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `capture-details` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"capture-details\" task of this application and remember its jobKey",
+                  "const element = \"capture-details\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "B3. First application - valid passport",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"idType\": \"PASSPORT\",\n    \"idNumber\": \"PA{{$randomInt}}55\",\n    \"idExpiry\": \"2031-06-30\",\n    \"fileName\": \"passport.jpg\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "After this the first application is active (waiting for financial details).\n\nCompletes the open task `upload-identity` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"upload-identity\" task of this application and remember its jobKey",
+                  "const element = \"upload-identity\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "B4. Register AGAIN with the same email + mobile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"email\": \"{{dupEmail}}\",\n  \"mobile\": \"{{dupMobile}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Registration itself is accepted; the duplicate check runs after identity verification."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "B5. Second application - personal details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"firstName\": \"Priya\",\n    \"lastName\": \"Sharma\",\n    \"dateOfBirth\": \"1990-04-12\",\n    \"addressLine\": \"12 George Street\",\n    \"suburb\": \"Sydney\",\n    \"state\": \"NSW\",\n    \"postcode\": \"2000\",\n    \"employmentStatus\": \"FULL_TIME\",\n    \"employerName\": \"Harbour Logistics Pty Ltd\",\n    \"employmentYears\": 4\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `capture-details` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"capture-details\" task of this application and remember its jobKey",
+                  "const element = \"capture-details\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "B6. Second application - passport",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"idType\": \"PASSPORT\",\n    \"idNumber\": \"PA{{$randomInt}}66\",\n    \"idExpiry\": \"2031-06-30\",\n    \"fileName\": \"passport.jpg\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `upload-identity` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"upload-identity\" task of this application and remember its jobKey",
+                  "const element = \"upload-identity\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "B7. Get application (expect REJECTED - duplicate application)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Everything about {{applicationId}}. The Postman console shows the status and the open tasks."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const r = pm.response.json();",
+                  "console.log(\"status:\", r.application.status, \"|\", r.application.statusReason || \"\", \"| open tasks:\", r.openTasks.map(t => t.elementId).join(\", \"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. UC02 - Credit assessment",
+      "description": "Quick-start creates a complete application and starts the process at UC02. Run \"Get application\" after a quick start to see the outcome.",
+      "item": [
+        {
+          "name": "Quick start UC02 - APPROVE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc02\",\n  \"username\": \"{{customer}}\",\n  \"data\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "AUD 5,000, affordable -> approved, waits for credit officer approval (UC03)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quick start UC02 - REFER (income not verified)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc02\",\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"employerName\": \"Unknown Pty Ltd\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quick start UC02 - REFER (low credit score)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc02\",\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"lastName\": \"Risky\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quick start UC02 - DECLINE (financial hardship)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc02\",\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"monthlyExpenses\": 4900\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quick start UC02 - FRAUD indicator",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc02\",\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"lastName\": \"Fraud\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get application (status + open tasks)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Everything about {{applicationId}}. The Postman console shows the status and the open tasks."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const r = pm.response.json();",
+                  "console.log(\"status:\", r.application.status, \"|\", r.application.statusReason || \"\", \"| open tasks:\", r.openTasks.map(t => t.elementId).join(\", \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manual assessment - approve (kiran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kiran\",\n  \"data\": {\n    \"officerDecision\": \"APPROVE\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Use after a REFER quick start.\n\nCompletes the open task `manual-assessment` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"manual-assessment\" task of this application and remember its jobKey",
+                  "const element = \"manual-assessment\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Manual assessment - decline (kiran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kiran\",\n  \"data\": {\n    \"officerDecision\": \"DECLINE\",\n    \"comment\": \"Income could not be verified\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `manual-assessment` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"manual-assessment\" task of this application and remember its jobKey",
+                  "const element = \"manual-assessment\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fraud investigation - cleared (kiran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kiran\",\n  \"data\": {\n    \"fraudConfirmed\": false\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Use after a FRAUD quick start. Cleared applications need a senior approval in UC03.\n\nCompletes the open task `fraud-investigation` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"fraud-investigation\" task of this application and remember its jobKey",
+                  "const element = \"fraud-investigation\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fraud investigation - confirmed (kiran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kiran\",\n  \"data\": {\n    \"fraudConfirmed\": true,\n    \"comment\": \"Identity theft confirmed\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `fraud-investigation` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"fraud-investigation\" task of this application and remember its jobKey",
+                  "const element = \"fraud-investigation\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. UC03 - Approval, agreement & disbursement",
+      "description": "Quick start, officer approval, then sign within 5 minutes (signing deadline).",
+      "item": [
+        {
+          "name": "Quick start UC03 - standard approval",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc03\",\n  \"username\": \"{{customer}}\",\n  \"data\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quick start UC03 - HIGH risk (needs senior approval)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc03\",\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"riskCategory\": \"HIGH\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get application (status + open tasks)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Everything about {{applicationId}}. The Postman console shows the status and the open tasks."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const r = pm.response.json();",
+                  "console.log(\"status:\", r.application.status, \"|\", r.application.statusReason || \"\", \"| open tasks:\", r.openTasks.map(t => t.elementId).join(\", \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Credit officer approval - approve (kiran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kiran\",\n  \"data\": {\n    \"officerApproval\": \"APPROVE\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `officer-approval` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"officer-approval\" task of this application and remember its jobKey",
+                  "const element = \"officer-approval\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Credit officer approval - reject (kiran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kiran\",\n  \"data\": {\n    \"officerApproval\": \"REJECT\",\n    \"comment\": \"Policy exception not allowed\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `officer-approval` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"officer-approval\" task of this application and remember its jobKey",
+                  "const element = \"officer-approval\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Senior approval - approve (suresh)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"suresh\",\n  \"data\": {\n    \"seniorApproval\": \"APPROVE\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `senior-approval` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"senior-approval\" task of this application and remember its jobKey",
+                  "const element = \"senior-approval\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Senior approval - reject (suresh)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"suresh\",\n  \"data\": {\n    \"seniorApproval\": \"REJECT\",\n    \"comment\": \"Risk too high\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `senior-approval` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"senior-approval\" task of this application and remember its jobKey",
+                  "const element = \"senior-approval\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer signs the agreement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/sign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}",
+                "sign"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Works when the status is AGREEMENT_SENT. The bank confirms the payout ~3 s later and the loan becomes ACTIVE (UC04 starts)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Arrange manual signing (e-signature down) (kiran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kiran\",\n  \"data\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Only after switching \"esignDown\" on (folder 6) before the agreement is sent.\n\nCompletes the open task `manual-signing` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"manual-signing\" task of this application and remember its jobKey",
+                  "const element = \"manual-signing\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resolve failed bank transfer (suresh)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"suresh\",\n  \"data\": {\n    \"comment\": \"Bank fixed - retry\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Only after \"bankTransferFails\" was on. Switch it off first, then retry.\n\nCompletes the open task `resolve-transfer` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"resolve-transfer\" task of this application and remember its jobKey",
+                  "const element = \"resolve-transfer\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate disbursement request (blocked)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/applications/{{applicationId}}/duplicate-disbursement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "applications",
+                "{{applicationId}}",
+                "duplicate-disbursement"
+              ]
+            },
+            "description": "After the payout: a second payout request returns DUPLICATE_BLOCKED."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. UC04 - Repayments & collections",
+      "description": "Quick start creates an active loan; the first direct debit runs after the 30 s due-date timer.",
+      "item": [
+        {
+          "name": "Quick start UC04 - payments succeed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc04\",\n  \"username\": \"{{customer}}\",\n  \"data\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quick start UC04 - insufficient funds (-> retry -> collections)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc04\",\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"bankAccountNumber\": \"062000555599\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quick start UC04 - incorrect bank details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/quick-start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "quick-start"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"useCase\": \"uc04\",\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"bankAccountNumber\": \"062000555500\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const id = pm.response.json().applicationId;",
+                  "pm.collectionVariables.set(\"applicationId\", id);",
+                  "console.log(\"applicationId = \" + id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get application (status + open tasks)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Everything about {{applicationId}}. The Postman console shows the status and the open tasks."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const r = pm.response.json();",
+                  "console.log(\"status:\", r.application.status, \"|\", r.application.statusReason || \"\", \"| open tasks:\", r.openTasks.map(t => t.elementId).join(\", \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer updates bank details",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"data\": {\n    \"bankAccountNumber\": \"062000777711\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `update-bank-details` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"update-bank-details\" task of this application and remember its jobKey",
+                  "const element = \"update-bank-details\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Collections follow-up - recovered (suresh)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"suresh\",\n  \"data\": {\n    \"collectionsOutcome\": \"PAID\",\n    \"comment\": \"Customer paid by card\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `collections` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"collections\" task of this application and remember its jobKey",
+                  "const element = \"collections\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Collections follow-up - defaulted (suresh)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"suresh\",\n  \"data\": {\n    \"collectionsOutcome\": \"DEFAULTED\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `collections` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"collections\" task of this application and remember its jobKey",
+                  "const element = \"collections\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer disputes a repayment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/dispute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}",
+                "dispute"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"reason\": \"I was charged twice\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Investigate dispute (suresh)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"suresh\",\n  \"data\": {\n    \"disputeOutcome\": \"REJECTED\",\n    \"comment\": \"Only one debit found\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `investigate-dispute` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"investigate-dispute\" task of this application and remember its jobKey",
+                  "const element = \"investigate-dispute\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer requests a new repayment date",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/date-change",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}",
+                "date-change"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{customer}}\",\n  \"newDueDay\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Review date change - approve (kiran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{jobKey}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{jobKey}}",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"kiran\",\n  \"data\": {\n    \"dateChangeApproved\": true\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "\n\nCompletes the open task `review-date-change` of {{applicationId}} (jobKey is looked up automatically)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// find the open \"review-date-change\" task of this application and remember its jobKey",
+                  "const element = \"review-date-change\";",
+                  "const url = pm.collectionVariables.get(\"baseUrl\") + \"/api/applications/\" + pm.collectionVariables.get(\"applicationId\");",
+                  "let tries = 0;",
+                  "function findTask() {",
+                  "  pm.sendRequest(url, (err, res) => {",
+                  "    const t = !err && res.code === 200 && res.json().openTasks.find(x => x.elementId === element);",
+                  "    if (t) {",
+                  "      pm.collectionVariables.set(\"jobKey\", String(t.jobKey));",
+                  "    } else if (++tries < 20) {",
+                  "      setTimeout(findTask, 500); // the process may still be working - try again",
+                  "    } else {",
+                  "      pm.collectionVariables.set(\"jobKey\", \"0\");",
+                  "      console.warn(\"No open task '\" + element + \"' - run 'Get application' to see where the process is\");",
+                  "    }",
+                  "  });",
+                  "}",
+                  "findTask();"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Queries",
+      "description": "Read-only calls used by the screens.",
+      "item": [
+        {
+          "name": "List all applications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List applications of the customer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications?username={{customer}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "{{customer}}"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get application (status + open tasks)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            },
+            "description": "Everything about {{applicationId}}. The Postman console shows the status and the open tasks."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));",
+                  "const r = pm.response.json();",
+                  "console.log(\"status:\", r.application.status, \"|\", r.application.statusReason || \"\", \"| open tasks:\", r.openTasks.map(t => t.elementId).join(\", \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Open tasks - customer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks?username={{customer}}&role=USER",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "{{customer}}"
+                },
+                {
+                  "key": "role",
+                  "value": "USER"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Open tasks - credit officer queue (kiran)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks?username=kiran&role=REVIEWER",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "kiran"
+                },
+                {
+                  "key": "role",
+                  "value": "REVIEWER"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Open tasks - senior / collections / operations queue (suresh)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks?username=suresh&role=MANAGER",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "suresh"
+                },
+                {
+                  "key": "role",
+                  "value": "MANAGER"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Notifications of the customer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?username={{customer}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "username",
+                  "value": "{{customer}}"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Demo switches",
+      "description": "Flip failure switches to show exception paths. Remember to switch them off again. Reset deletes every application and cancels its process.",
+      "item": [
+        {
+          "name": "Get switches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/switches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "switches"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E-signature service DOWN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/switches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "switches"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"esignDown\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bank transfer FAILS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/switches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "switches"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bankTransferFails\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Direct debit: insufficient funds",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/switches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "switches"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"insufficientFunds\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "All switches OFF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/switches",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "switches"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"esignDown\": false,\n  \"bankTransferFails\": false,\n  \"insufficientFunds\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RESET test data (deletes all applications)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "reset"
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP \" + pm.response.code, () => pm.expect(pm.response.code).to.be.below(300));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

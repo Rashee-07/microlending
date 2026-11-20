@@ -1,0 +1,172 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-login-history
+      author: microlending
+      changes:
+        - createTable:
+            tableName: login_history
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: username
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: login_time
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+  - changeSet:
+      id: 2-create-users
+      author: microlending
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: username
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: first_name
+                  type: VARCHAR(100)
+              - column:
+                  name: last_name
+                  type: VARCHAR(100)
+              - column:
+                  name: email
+                  type: VARCHAR(150)
+              - column:
+                  name: role
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+        # Same 3 users as in camunda-local/keycloak/microlending-realm.json
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: username, value: user1 }
+              - column: { name: first_name, value: Test }
+              - column: { name: last_name, value: User }
+              - column: { name: email, value: user1@microlending.local }
+              - column: { name: role, value: USER }
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: username, value: reviewer1 }
+              - column: { name: first_name, value: Test }
+              - column: { name: last_name, value: Reviewer }
+              - column: { name: email, value: reviewer1@microlending.local }
+              - column: { name: role, value: REVIEWER }
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: username, value: manager1 }
+              - column: { name: first_name, value: Test }
+              - column: { name: last_name, value: Manager }
+              - column: { name: email, value: manager1@microlending.local }
+              - column: { name: role, value: MANAGER }
+
+  - changeSet:
+      id: 3-create-loan-application
+      author: microlending
+      changes:
+        - createTable:
+            tableName: loan_application
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: process_instance_id
+                  type: BIGINT
+              - column:
+                  name: first_name
+                  type: VARCHAR(100)
+              - column:
+                  name: last_name
+                  type: VARCHAR(100)
+              - column:
+                  name: email
+                  type: VARCHAR(150)
+              - column:
+                  name: phone_number
+                  type: VARCHAR(20)
+              - column:
+                  name: loan_type
+                  type: VARCHAR(50)
+              - column:
+                  name: loan_amount
+                  type: NUMERIC(15,2)
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: SUBMITTED
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+  - changeSet:
+      id: 4-add-username-to-loan-application
+      author: microlending
+      changes:
+        - addColumn:
+            tableName: loan_application
+            columns:
+              - column:
+                  name: username
+                  type: VARCHAR(100)
+
+  # Logins were renamed to people's names: move existing data to the new usernames
+  - changeSet:
+      id: 5-rename-usernames
+      author: microlending
+      changes:
+        - sql:
+            sql: >
+              UPDATE users SET username = CASE username
+                WHEN 'user1' THEN 'priya' WHEN 'user2' THEN 'rahul' WHEN 'user3' THEN 'anita'
+                WHEN 'reviewer1' THEN 'kiran' WHEN 'manager1' THEN 'suresh' ELSE username END;
+              UPDATE loan_application SET username = CASE username
+                WHEN 'user1' THEN 'priya' WHEN 'user2' THEN 'rahul' WHEN 'user3' THEN 'anita'
+                WHEN 'reviewer1' THEN 'kiran' WHEN 'manager1' THEN 'suresh' ELSE username END;
+              UPDATE login_history SET username = CASE username
+                WHEN 'user1' THEN 'priya' WHEN 'user2' THEN 'rahul' WHEN 'user3' THEN 'anita'
+                WHEN 'reviewer1' THEN 'kiran' WHEN 'manager1' THEN 'suresh' ELSE username END;
+
+  # UC01-UC04 demo: customers, applications, assessment, loan accounts, repayments, tasks, audit
+  - changeSet:
+      id: 6-lending-schema
+      author: microlending
+      changes:
+        - sqlFile:
+            path: 006-lending-schema.sql
+            relativeToChangelogFile: true
+            splitStatements: true
