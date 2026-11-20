@@ -46,4 +46,8 @@ export const statusInfo = (status) => STATUS[status] || { label: status, tone: "
 export const money = (value) =>
   value === null || value === undefined
     ? "-"
-    : "AUD " + Number(value).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    : // whole amounts without cents (AUD 3,000), others always with two decimals (AUD 1,599.30)
+      "AUD " + Number(value).toLocaleString("en-AU", {
+        minimumFractionDigits: Number.isInteger(Number(value)) ? 0 : 2,
+        maximumFractionDigits: 2,
+      });
