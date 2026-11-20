@@ -9,7 +9,7 @@ const EMPTY = {
 };
 
 const BASE = {
-  loanAmount: "3000", loanPurpose: "Emergency expense", termMonths: "12", monthlyIncome: "5200",
+  loanAmount: "3000", loanPurpose: "Emergency expense", termMonths: "24", monthlyIncome: "5200",
   monthlyExpenses: "2400", monthlyLiabilities: "300", bankAccountNumber: "062000123456",
   incomeDocType: "PAYSLIP", incomeDocFileName: "payslip-october.pdf",
 };
