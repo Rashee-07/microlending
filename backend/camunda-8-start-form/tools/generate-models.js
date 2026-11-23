@@ -29,7 +29,7 @@ p.add({ id: 'start', type: 'start', name: 'Customer registered (email / mobile)'
 // ---------------------------------------------------------------------------
 // UC01 - Digital loan application and customer onboarding
 // ---------------------------------------------------------------------------
-p.sub('uc01', 'UC01 - Loan application & onboarding', {}, (s) => {
+p.sub('uc01', 'Loan application & onboarding', {}, (s) => {
   const r = B1 + 1;
   s.add({ id: 'uc01-start', type: 'start', c: 1, r });
   s.add({ id: 'capture-details', type: 'user', name: 'Enter personal, address & employment details', c: 2, r, ...CUSTOMER });
@@ -183,6 +183,8 @@ p.flow('gw-officer', 'senior-approval', {
 });
 p.flow('gw-officer', 'generate-agreement', {
   name: 'Approve', cond: '=officerApproval = "APPROVE" and approvalLevel != "SENIOR"',
+  // routed below the row (as re-drawn in Camunda Modeler) so it does not cross the senior-approval path
+  wp: [[920, 1870], [1490, 1870]],
 });
 p.flow('gw-officer', 'uc03-end-rejected', { name: 'Reject', def: true });
 p.flow('senior-approval', 'gw-senior');
