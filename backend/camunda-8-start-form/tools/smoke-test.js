@@ -1,7 +1,7 @@
-// End-to-end smoke test of UC01-UC04 through the REST API (backend must be running).
+// End-to-end smoke test of release 1 (UC01-UC02) through the REST API (backend must be running).
 //   node tools/smoke-test.js            -> all scenarios
-//   node tools/smoke-test.js uc01 uc03  -> only scenarios whose name starts with these
-// Uses the Keycloak demo users: priya (customer), kiran (REVIEWER), suresh (MANAGER).
+//   node tools/smoke-test.js uc01       -> only scenarios whose name starts with these
+// Uses the Keycloak demo users: priya (customer), kiran (REVIEWER).
 
 const API = process.env.API || 'http://localhost:8898/api';
 const only = process.argv.slice(2);
@@ -68,23 +68,16 @@ async function register(extra = {}) {
 }
 
 const scenarios = {
-  // UC01 happy path (income docs forgotten first) -> UC02 approve -> UC03 -> UC04 one payment
-  async 'uc01-to-uc04 happy path'() {
+  // UC01 happy path (income docs forgotten first) -> UC02 approve -> approved in principle
+  async 'uc01-to-uc02 happy path'() {
     const id = await register();
     await doTask(id, 'capture-details', 'priya', DETAILS);
     await doTask(id, 'upload-identity', 'priya', { ...VALID_ID, idNumber: 'PA' + uniq() });
     await doTask(id, 'capture-financials', 'priya', FINANCIALS); // no income document yet
     await status(id, 'INFO_REQUIRED');
     await doTask(id, 'upload-income-docs', 'priya', { incomeDocType: 'PAYSLIP', incomeDocFileName: 'payslip.pdf' });
-    await doTask(id, 'officer-approval', 'kiran', { officerApproval: 'APPROVE' });
-    await status(id, 'AGREEMENT_SENT');
-    await call('POST', `/applications/${id}/sign`, { username: 'priya' });
-    await status(id, 'ACTIVE', 30000);
-    const before = (await app(id)).loanAccount.outstandingBalance;
-    // the due-date timer is 30 seconds in the demo
-    await waitFor('first repayment PAID', async () => (await app(id)).repayments[0].status === 'PAID', 60000);
-    const after = (await app(id)).loanAccount.outstandingBalance;
-    return `app ${id}: assessed APPROVE, signed, disbursed, instalment 1 paid (balance ${before} -> ${after})`;
+    await status(id, 'APPROVED_IN_PRINCIPLE');
+    return `app ${id}: missing payslip uploaded, assessed ${(await app(id)).assessment.outcome} -> approved in principle`;
   },
 
   async 'uc01 identity document expired, then re-uploaded'() {
@@ -124,6 +117,14 @@ const scenarios = {
     return `app ${id}: REFER (${reason}) -> officer declined`;
   },
 
+  async 'uc02 refer -> officer approves -> approved in principle'() {
+    const { applicationId: id } = await call('POST', '/demo/quick-start', { useCase: 'uc02', data: { lastName: 'Risky' } });
+    await status(id, 'REFERRED');
+    await doTask(id, 'manual-assessment', 'kiran', { officerDecision: 'APPROVE' });
+    await status(id, 'APPROVED_IN_PRINCIPLE');
+    return `app ${id}: low credit score referred -> officer approved -> approved in principle`;
+  },
+
   async 'uc02 decline - hardship'() {
     const { applicationId: id } = await call('POST', '/demo/quick-start', { useCase: 'uc02', data: { monthlyExpenses: 4900 } });
     await status(id, 'DECLINED');
@@ -137,67 +138,12 @@ const scenarios = {
     await status(id, 'DECLINED');
     return `app ${id}: fraud confirmed -> declined`;
   },
-
-  async 'uc03 officer rejects'() {
-    const { applicationId: id } = await call('POST', '/demo/quick-start', { useCase: 'uc03' });
-    await doTask(id, 'officer-approval', 'kiran', { officerApproval: 'REJECT', comment: 'Policy exception not allowed' });
-    await status(id, 'DECLINED');
-    return `app ${id}: ${(await app(id)).application.statusReason}`;
-  },
-
-  async 'uc03 high risk -> senior approval'() {
-    const { applicationId: id } = await call('POST', '/demo/quick-start', { useCase: 'uc03', data: { riskCategory: 'HIGH' } });
-    await doTask(id, 'officer-approval', 'kiran', { officerApproval: 'APPROVE' });
-    await doTask(id, 'senior-approval', 'suresh', { seniorApproval: 'APPROVE' });
-    await status(id, 'AGREEMENT_SENT');
-    return `app ${id}: officer + senior approved, agreement sent`;
-  },
-
-  async 'uc03 e-signature down, transfer fails, duplicate payout blocked'() {
-    await call('POST', '/demo/switches', { esignDown: true, bankTransferFails: true });
-    try {
-      const { applicationId: id } = await call('POST', '/demo/quick-start', { useCase: 'uc03' });
-      await doTask(id, 'officer-approval', 'kiran', { officerApproval: 'APPROVE' });
-      await doTask(id, 'manual-signing', 'kiran', {}, 40000); // after 3 failed attempts
-      await call('POST', '/demo/switches', { esignDown: false });
-      await call('POST', `/applications/${id}/sign`, { username: 'priya' });
-      await status(id, 'DISBURSEMENT_FAILED');
-      await call('POST', '/demo/switches', { bankTransferFails: false });
-      await doTask(id, 'resolve-transfer', 'suresh', { comment: 'Bank fixed' });
-      await status(id, 'ACTIVE', 30000);
-      const dup = await call('POST', `/demo/applications/${id}/duplicate-disbursement`);
-      return `app ${id}: manual signing, failed transfer resolved, duplicate request -> ${dup.result}`;
-    } finally {
-      await call('POST', '/demo/switches', { esignDown: false, bankTransferFails: false });
-    }
-  },
-
-  async 'uc04 insufficient funds -> retry -> collections'() {
-    const { applicationId: id } = await call('POST', '/demo/quick-start', { useCase: 'uc04', data: { bankAccountNumber: '062000555599' } });
-    await status(id, 'IN_ARREARS', 60000); // after the 30-second due-date timer
-    await status(id, 'COLLECTIONS', 120000); // retry timer (demo: 1 minute)
-    await doTask(id, 'collections', 'suresh', { collectionsOutcome: 'PAID', comment: 'Customer paid by card' });
-    await waitFor('instalment 1 paid', async () => (await app(id)).repayments[0].status === 'PAID', 20000);
-    return `app ${id}: failed twice, collections recovered the payment`;
-  },
-
-  async 'uc04 incorrect bank details, dispute, date change'() {
-    const { applicationId: id } = await call('POST', '/demo/quick-start', { useCase: 'uc04', data: { bankAccountNumber: '062000555500' } });
-    await doTask(id, 'update-bank-details', 'priya', { bankAccountNumber: '062000777711' }, 60000);
-    await waitFor('instalment 1 paid', async () => (await app(id)).repayments[0].status === 'PAID', 20000);
-    await call('POST', `/applications/${id}/dispute`, { username: 'priya', reason: 'Charged twice' });
-    await doTask(id, 'investigate-dispute', 'suresh', { disputeOutcome: 'REJECTED', comment: 'Only one debit found' });
-    await call('POST', `/applications/${id}/date-change`, { username: 'priya', newDueDay: 15 });
-    await doTask(id, 'review-date-change', 'kiran', { dateChangeApproved: true });
-    await waitFor('due dates moved', async () => (await app(id)).repayments[1].dueDate.endsWith('-15'));
-    return `app ${id}: bank details updated & paid, dispute handled, due day moved to 15`;
-  },
 };
 
 (async () => {
   let failed = 0;
   const names = Object.keys(scenarios).filter((n) => !only.length || only.some((o) => n.startsWith(o)));
-  // one after another: some scenarios flip the global demo switches
+  // one after another, so the output stays readable
   for (const name of names) {
     const t0 = Date.now();
     try {
