@@ -27,6 +27,16 @@ public class ProcessFlowWorker {
         v.fill(v.header(ProcessConstants.HEADER_MESSAGE)), null);
   }
 
+  /** End of release 1: the credit assessment approved the loan, so it is approved in principle. */
+  @JobWorker(type = ProcessConstants.JOB_APPROVE_IN_PRINCIPLE, fetchAllVariables = true)
+  public void approveInPrinciple(ActivatedJob job) {
+    JobVariables v = JobVariables.of(job);
+    statusService.notifyCustomer(v.applicationId(), "Your loan is approved in principle",
+        "Good news - your application passed our credit assessment and is approved in principle."
+            + " We will contact you about the final approval and the loan agreement.",
+        ApplicationStatus.APPROVED_IN_PRINCIPLE);
+  }
+
   /** "Close application & notify customer": uses closeStatus / closeReason set earlier in the process. */
   @JobWorker(type = ProcessConstants.JOB_CLOSE_APPLICATION, fetchAllVariables = true)
   public void closeApplication(ActivatedJob job) {

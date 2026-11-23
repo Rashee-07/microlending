@@ -12,7 +12,6 @@ import com.aaseya.microlending.constants.ProcessConstants;
 import com.aaseya.microlending.constants.TaskElements;
 import com.aaseya.microlending.dao.LoanApplicationDao;
 import com.aaseya.microlending.dao.WorkItemDao;
-import com.aaseya.microlending.dto.form.BankDetailsForm;
 import com.aaseya.microlending.dto.form.CustomerDetailsForm;
 import com.aaseya.microlending.dto.form.FinancialDetailsForm;
 import com.aaseya.microlending.dto.form.IdentityDocumentForm;
@@ -44,20 +43,15 @@ public class TaskService {
   private final WorkItemDao workItemDao;
   private final LoanApplicationDao applicationDao;
   private final OnboardingService onboardingService;
-  private final LoanApprovalService loanApprovalService;
-  private final RepaymentService repaymentService;
   private final ProcessService processService;
   private final AuditService audit;
   private final ObjectMapper objectMapper;
 
   public TaskService(WorkItemDao workItemDao, LoanApplicationDao applicationDao, OnboardingService onboardingService,
-      LoanApprovalService loanApprovalService, RepaymentService repaymentService, ProcessService processService,
-      AuditService audit, ObjectMapper objectMapper) {
+      ProcessService processService, AuditService audit, ObjectMapper objectMapper) {
     this.workItemDao = workItemDao;
     this.applicationDao = applicationDao;
     this.onboardingService = onboardingService;
-    this.loanApprovalService = loanApprovalService;
-    this.repaymentService = repaymentService;
     this.processService = processService;
     this.audit = audit;
     this.objectMapper = objectMapper;
@@ -71,11 +65,6 @@ public class TaskService {
     ApplicationStatus status = TaskElements.STATUS_WHILE_OPEN.get(elementId);
     if (status != null) {
       applicationDao.updateStatus(applicationId, status, null);
-    }
-    if (TaskElements.COLLECTIONS.equals(elementId)) {
-      // repeated payment failures: the loan is escalated to collections when this task opens
-      repaymentService.escalateToCollections(applicationId, ((Number) variables.get("repaymentId")).longValue(),
-          ((Number) variables.get("attempts")).intValue());
     }
     audit.log(applicationId, "TASK_CREATED",
         name + (assignee != null ? " (assigned to " + assignee + ")" : " (group " + candidateGroup + ")"), AuditService.SYSTEM);
@@ -120,9 +109,7 @@ public class TaskService {
       case TaskElements.CAPTURE_FINANCIALS -> onboardingService.saveFinancialDetails(appId, form(data, FinancialDetailsForm.class));
       case TaskElements.UPLOAD_INCOME_DOCS -> onboardingService.saveIncomeDocument(appId, form(data, IncomeDocumentForm.class));
       case TaskElements.MANUAL_ASSESSMENT -> {
-        if ("APPROVE".equals(data.get("officerDecision"))) {
-          extra.put("riskCategory", "HIGH"); // referred loans always get a senior approval in UC03
-        } else {
+        if (!"APPROVE".equals(data.get("officerDecision"))) {
           close(extra, withComment("Declined after manual credit assessment", data));
         }
       }
@@ -131,33 +118,10 @@ public class TaskService {
         extra.put("fraudConfirmed", confirmed);
         if (confirmed) {
           close(extra, withComment("Application declined following a fraud investigation", data));
-        } else {
-          extra.put("riskCategory", "HIGH"); // cleared, but still needs a senior approval in UC03
         }
       }
-      case TaskElements.OFFICER_APPROVAL -> {
-        if (!"APPROVE".equals(data.get("officerApproval"))) {
-          close(extra, withComment("Rejected by the credit officer", data));
-        }
-      }
-      case TaskElements.SENIOR_APPROVAL -> {
-        if (!"APPROVE".equals(data.get("seniorApproval"))) {
-          close(extra, withComment("Rejected by the senior credit approver", data));
-        }
-      }
-      case TaskElements.MANUAL_SIGNING -> loanApprovalService.agreementSentManually(appId);
-      case TaskElements.UPDATE_BANK_DETAILS -> repaymentService.updateBankDetails(appId, form(data, BankDetailsForm.class));
-      case TaskElements.COLLECTIONS -> {
-        boolean recovered = "PAID".equals(data.get("collectionsOutcome"));
-        extra.put("collectionsOutcome", recovered ? "PAID" : "DEFAULTED");
-        if (!recovered) {
-          repaymentService.markDefaulted(appId);
-        }
-      }
-      case TaskElements.REVIEW_DATE_CHANGE -> extra.put("dateChangeApproved",
-          Boolean.parseBoolean(String.valueOf(data.get("dateChangeApproved"))));
       default -> {
-        // RESOLVE_TRANSFER, INVESTIGATE_DISPUTE: the data is passed on as variables only
+        // other tasks: the data is passed on as variables only
       }
     }
     return extra;
@@ -179,8 +143,7 @@ public class TaskService {
   }
 
   private static String decisionSummary(Map<String, Object> v) {
-    for (String k : new String[] {"officerDecision", "officerApproval", "seniorApproval", "fraudConfirmed",
-        "collectionsOutcome", "dateChangeApproved", "disputeOutcome"}) {
+    for (String k : new String[] {"officerDecision", "fraudConfirmed"}) {
       if (v.containsKey(k)) {
         return " (" + k + " = " + v.get(k) + ")";
       }

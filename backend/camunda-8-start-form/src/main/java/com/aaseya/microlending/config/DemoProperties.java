@@ -10,29 +10,20 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * Timers are ISO-8601 durations, kept short so every path can be shown live.
  */
 @ConfigurationProperties(prefix = "demo")
-public record DemoProperties(Timers timers, Policy policy, Bank bank) {
+public record DemoProperties(Timers timers, Policy policy) {
 
-  public record Timers(String resumeReminder, String abandonAfter, String signDeadline, String dueDateWait,
-      String paymentRetry) {
+  public record Timers(String resumeReminder, String abandonAfter) {
   }
 
-  /** maxPaymentAttempts: direct debits tried before collections. interestRate: % per year. */
-  public record Policy(int maxPaymentAttempts, double interestRate) {
+  /** interestRate: % per year, used for the repayment in the affordability calculation. */
+  public record Policy(double interestRate) {
   }
 
-  /** Delay before the simulated bank sends its asynchronous confirmation. */
-  public record Bank(long callbackDelayMs) {
-  }
-
-  /** Timer and policy variables every process instance gets (used by BPMN timers and gateways). */
+  /** Timer variables every process instance gets (used by the BPMN timers). */
   public Map<String, Object> processVariables() {
     Map<String, Object> v = new LinkedHashMap<>();
     v.put("resumeReminderAfter", timers.resumeReminder());
     v.put("abandonAfter", timers.abandonAfter());
-    v.put("signDeadline", timers.signDeadline());
-    v.put("dueDateWait", timers.dueDateWait());
-    v.put("paymentRetryDelay", timers.paymentRetry());
-    v.put("maxPaymentAttempts", policy.maxPaymentAttempts());
     return v;
   }
 }
