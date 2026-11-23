@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "MicroLending - UC01-UC02 (release 1)",
-    "description": "REST API of the MicroLending demo backend (Spring Boot + Camunda 8), release 1: UC01 application & onboarding and UC02 credit assessment.\nApproved applications end APPROVED_IN_PRINCIPLE. UC03 (approval, payout) and UC04 (repayments) are on branch us-1.\n\nHow to use:\n1. Start Docker (camunda-local), the backend (port 8898).\n2. Run a folder top to bottom. Register / quick-start requests save {{applicationId}};\n   task requests find their own {{jobKey}}.\n3. Watch the process in Operate (http://localhost:8081) and the customer screens at http://localhost:3077.\n\nDemo triggers: see backend docs/DEMO-TRIGGERS.md (e.g. ID number ending 000 = identity failure, last name Fraud = fraud alert).",
+    "description": "REST API of the MicroLending demo backend (Spring Boot + Camunda 8), release 1: UC01 application & onboarding and UC02 credit assessment.\nApproved applications end APPROVED_IN_PRINCIPLE. UC03 (approval, payout) and UC04 (repayments) are on branch us-1.\n\nHow to use:\n1. Start Docker (camunda-local), the backend (port 8898).\n2. Run a folder top to bottom. Register / quick-start requests save {{applicationId}};\n   task requests find their own {{jobKey}}.\n3. Watch the process in Operate (http://localhost:8081) and the customer screens at http://localhost:3077.\n\nDemo triggers: see backend docs/DEMO-TRIGGERS-RELEASE-1.md (e.g. ID number ending 000 = identity failure, last name Fraud = fraud alert).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

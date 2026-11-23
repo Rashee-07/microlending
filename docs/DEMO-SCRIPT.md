@@ -118,7 +118,7 @@ Next release: final approval, agreement, payout and repayments."
 | UC01 reminder | Leave an application after *Your details* → 2 min later *Finish your loan application* message |
 
 Same scenarios via API: Postman collection `backend/camunda-8-start-form/docs/postman/`.
-All triggers: `backend/camunda-8-start-form/docs/DEMO-TRIGGERS.md`.
+All triggers: `backend/camunda-8-start-form/docs/DEMO-TRIGGERS-RELEASE-1.md`.
 
 ---
 

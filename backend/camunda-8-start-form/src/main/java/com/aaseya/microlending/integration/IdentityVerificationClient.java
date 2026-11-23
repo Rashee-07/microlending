@@ -8,7 +8,7 @@ import com.aaseya.microlending.model.ApplicationDocument;
 import com.aaseya.microlending.model.enums.VerificationStatus;
 
 /**
- * SIMULATED identity provider (UC01). Demo triggers (docs/DEMO-TRIGGERS.md):
+ * SIMULATED identity provider (UC01). Demo triggers (docs/DEMO-TRIGGERS-RELEASE-1.md):
  * expiry in the past or number shorter than 6 characters = EXPIRED (invalid document, re-upload),
  * number ending in 000 = FAILED (person could not be matched).
  */

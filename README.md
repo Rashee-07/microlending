@@ -11,4 +11,4 @@ loan origination assessment
 Both branches use the same local database and Zeebe. After switching branch, restart the backend and use
 **Demo panel → Reset test data**.
 
-Demo guides: `docs/DEMO-SCRIPT.md` and `backend/camunda-8-start-form/docs/DEMO-TRIGGERS.md`.
+Demo guides: `docs/DEMO-SCRIPT.md` and `backend/camunda-8-start-form/docs/DEMO-TRIGGERS-RELEASE-1.md`.

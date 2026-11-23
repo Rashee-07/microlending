@@ -1,5 +1,5 @@
 // Demo panel content for release 1 (UC01-UC02): one-click UC02 scenarios and the UC01 inputs
-// (see backend docs/DEMO-TRIGGERS.md).
+// (see backend docs/DEMO-TRIGGERS-RELEASE-1.md).
 
 export const CUSTOMERS = ["priya", "rahul", "anita"];
 

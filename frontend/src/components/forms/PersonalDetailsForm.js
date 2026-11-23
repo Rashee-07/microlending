@@ -13,7 +13,7 @@ const BASE = {
   employerName: "Harbour Logistics Pty Ltd", employmentYears: "4",
 };
 
-// Demo scenarios that are decided by these details (see docs/DEMO-TRIGGERS.md)
+// Demo scenarios that are decided by these details (see docs/DEMO-TRIGGERS-RELEASE-1.md)
 const SAMPLES = [
   { label: "Standard", values: BASE },
   { label: "Unknown employer (refer)", values: { ...BASE, employerName: "Unknown Pty Ltd" } },
