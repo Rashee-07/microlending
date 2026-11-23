@@ -1,10 +1,10 @@
 import React from "react";
-import { STAGES, FINAL_STATUSES, statusInfo } from "../constants/statuses";
+import { STAGES, FINAL_STATUSES, SUCCESS_STATUSES, statusInfo } from "../constants/statuses";
 
-// The four use cases as steps: done / current / not reached. A closed application shows where it stopped.
+// The steps of the application: done / current / not reached. A closed application shows where it stopped.
 function ProgressTracker({ status }) {
   const info = statusInfo(status);
-  const finished = status === "CLOSED";
+  const finished = SUCCESS_STATUSES.includes(status);
   const stopped = FINAL_STATUSES.includes(status) && !finished;
 
   return (

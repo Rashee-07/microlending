@@ -22,17 +22,10 @@ export const api = {
   tasks: (username, role) => body(http.get("/api/tasks", { params: { username, role } })),
   completeTask: (jobKey, username, data) => body(http.post(`/api/tasks/${jobKey}/complete`, { username, data })),
 
-  // customer actions
-  sign: (id, username) => body(http.post(`/api/applications/${id}/sign`, { username })),
-  dispute: (id, username, reason) => body(http.post(`/api/applications/${id}/dispute`, { username, reason })),
-  dateChange: (id, username, newDueDay) =>
-    body(http.post(`/api/applications/${id}/date-change`, { username, newDueDay })),
+  // customer messages
   notifications: (username) => body(http.get("/api/notifications", { params: { username } })),
 
   // demo panel
-  demoSwitches: () => body(http.get("/api/demo/switches")),
-  setDemoSwitches: (values) => body(http.post("/api/demo/switches", values)),
   quickStart: (useCase, username, data) => body(http.post("/api/demo/quick-start", { useCase, username, data })),
   resetDemo: () => body(http.post("/api/demo/reset")),
-  duplicateDisbursement: (id) => body(http.post(`/api/demo/applications/${id}/duplicate-disbursement`)),
 };

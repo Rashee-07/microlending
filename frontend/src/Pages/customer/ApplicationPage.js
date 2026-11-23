@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api, errorMessage } from "../../api/client";
 import { currentUser } from "../../session";
-import { FINAL_STATUSES, money, statusInfo } from "../../constants/statuses";
+import { FINAL_STATUSES, money } from "../../constants/statuses";
 import StatusBadge from "../../components/StatusBadge";
 import ProgressTracker from "../../components/ProgressTracker";
 import NotificationList from "../../components/NotificationList";
@@ -11,11 +11,6 @@ import PersonalDetailsForm from "../../components/forms/PersonalDetailsForm";
 import IdentityDocumentForm from "../../components/forms/IdentityDocumentForm";
 import FinancialsForm from "../../components/forms/FinancialsForm";
 import IncomeDocumentForm from "../../components/forms/IncomeDocumentForm";
-import BankDetailsForm from "../../components/forms/BankDetailsForm";
-import SignAgreementCard from "../../components/loan/SignAgreementCard";
-import LoanSummary from "../../components/loan/LoanSummary";
-import RepaymentSchedule from "../../components/loan/RepaymentSchedule";
-import LoanRequests from "../../components/loan/LoanRequests";
 
 const POLL_MS = 2000;
 
@@ -29,29 +24,19 @@ const WAITING_TEXT = {
   DECLINING: "We are checking your credit history and affordability.",
   REFERRED: "A credit officer is reviewing your application. We will let you know the outcome.",
   FRAUD_INVESTIGATION: "Our team is reviewing your application. We will let you know the outcome.",
-  APPROVED_IN_PRINCIPLE: "Good news - your loan is approved in principle and is with our credit team for final approval.",
-  PENDING_APPROVAL: "Your application is with our credit team for final approval.",
-  PENDING_SENIOR_APPROVAL: "Your application is with our credit team for final approval.",
-  OFFER_GENERATED: "We are preparing your loan agreement.",
-  ESIGN_UNAVAILABLE: "We are preparing your loan agreement and will send it to you shortly.",
-  SIGNED: "Thanks for signing! We are paying the money into your bank account.",
-  DISBURSING: "We are paying the money into your bank account.",
-  DISBURSEMENT_FAILED: "There is a short delay paying out your loan - our team is on it.",
 };
 
 const FINAL_TEXT = {
+  APPROVED_IN_PRINCIPLE: "Good news - your loan is approved in principle!",
   REJECTED: "We could not accept your application.",
   EXPIRED: "Your application expired because it was not completed in time.",
   DECLINED: "Unfortunately we cannot offer you this loan.",
-  OFFER_EXPIRED: "Your loan offer expired because the agreement was not signed in time.",
-  DEFAULTED: "Your loan has been passed to our recovery team.",
-  CLOSED: "Your loan is fully repaid. Thank you!",
 };
 
 // Remove empty fields so the backend does not receive "" for dates or numbers
 const clean = (data) => Object.fromEntries(Object.entries(data).filter(([, v]) => v !== "" && v !== null && v !== undefined));
 
-/** One application: progress across UC01-UC04 and whatever the customer has to do next. */
+/** One application: progress across UC01-UC02 and whatever the customer has to do next. */
 function ApplicationPage() {
   const { id } = useParams();
   const user = currentUser();
@@ -91,8 +76,6 @@ function ApplicationPage() {
       .finally(() => setBusy(false));
   };
 
-  const sign = () => api.sign(app.id, user.username).then(load).catch((err) => setError(errorMessage(err)));
-
   return (
     <div>
       <Link to="/customer" className="backLink">← My loans</Link>
@@ -114,18 +97,6 @@ function ApplicationPage() {
       <div className="twoColumns wideLeft">
         <div className="stack">
           {renderAction()}
-          {detail.loanAccount && statusInfo(app.status).stage === 4 && (
-            <>
-              <LoanSummary loan={detail.loanAccount} repayments={detail.repayments} />
-              <RepaymentSchedule repayments={detail.repayments} />
-              {!FINAL_STATUSES.includes(app.status) && (
-                <LoanRequests
-                  onDispute={(reason) => api.dispute(app.id, user.username, reason)}
-                  onDateChange={(day) => api.dateChange(app.id, user.username, day)}
-                />
-              )}
-            </>
-          )}
         </div>
         <div className="stack">
           <div className="card">
@@ -141,7 +112,7 @@ function ApplicationPage() {
     </div>
   );
 
-  /** The main card: the open customer task, the agreement to sign, a waiting message or the final result. */
+  /** The main card: the open customer task, a waiting message or the final result. */
   function renderAction() {
     if (task) {
       switch (task.elementId) {
@@ -153,22 +124,18 @@ function ApplicationPage() {
           return <FinancialsForm onSubmit={submitTask} busy={busy} />;
         case "upload-income-docs":
           return <IncomeDocumentForm onSubmit={submitTask} busy={busy} missing={app.statusReason} />;
-        case "update-bank-details":
-          return <BankDetailsForm onSubmit={submitTask} busy={busy} />;
         default:
           return null;
       }
     }
-    if (app.status === "AGREEMENT_SENT" && detail.loanAccount) {
-      return <SignAgreementCard loan={detail.loanAccount} onSign={sign} />;
-    }
     if (FINAL_STATUSES.includes(app.status)) {
-      const good = app.status === "CLOSED";
+      const good = app.status === "APPROVED_IN_PRINCIPLE";
       return (
         <div className={"card resultCard " + (good ? "good" : "bad")}>
           <div className="resultIcon">{good ? "✓" : "!"}</div>
           <h3>{FINAL_TEXT[app.status]}</h3>
           {app.statusReason && !good && <p>Reason: {app.statusReason}</p>}
+          {good && <p>We will contact you about the final approval and the loan agreement.</p>}
         </div>
       );
     }

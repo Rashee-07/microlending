@@ -1,21 +1,18 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { api, errorMessage } from "../../api/client";
 import { money } from "../../constants/statuses";
-import { SWITCHES, SCENARIOS, UC01_TRIGGERS, CUSTOMERS, TOOLS_LINKS } from "../../constants/demo";
+import { SCENARIOS, UC01_TRIGGERS, CUSTOMERS, TOOLS_LINKS } from "../../constants/demo";
 import StatusBadge from "../../components/StatusBadge";
 import { formatTime } from "../../components/NotificationList";
 
-/** Presenter's control room: failure switches, one-click scenarios per use case, test-data reset. */
+/** Presenter's control room (release 1): one-click UC02 scenarios, UC01 inputs, test-data reset. */
 function DemoPanel() {
-  const [switches, setSwitches] = useState({});
   const [applications, setApplications] = useState([]);
   const [customer, setCustomer] = useState("priya");
   const [busy, setBusy] = useState("");
   const [result, setResult] = useState(null); // { tone, text }
-  const [payoutId, setPayoutId] = useState("");
 
   const load = useCallback(() => {
-    api.demoSwitches().then(setSwitches).catch(() => {});
     api.applications().then(setApplications).catch(() => {});
   }, []);
 
@@ -36,37 +33,25 @@ function DemoPanel() {
       });
   };
 
-  const toggle = (name) => run(name, () => api.setDemoSwitches({ [name]: !switches[name] }).then(setSwitches));
-
   const start = (s) =>
     run(s.key, async () => {
-      if (s.switchOn) setSwitches(await api.setDemoSwitches({ [s.switchOn]: true }));
       const { applicationId } = await api.quickStart(s.useCase, customer, s.data);
       setResult({ tone: "good", text: `Application #${applicationId} started (${s.title}). Next: ${s.next.replace("{customer}", customer)}` });
     });
 
   const reset = () => {
-    if (!window.confirm("Delete ALL applications, cancel their processes in Camunda and switch every failure off?")) return;
+    if (!window.confirm("Delete ALL applications and cancel their processes in Camunda?")) return;
     run("reset", () =>
       api.resetDemo().then((r) =>
-        setResult({ tone: "good", text: `Clean start: ${r.applicationsDeleted} applications deleted, ${r.processInstancesCancelled} running processes cancelled, all switches off.` })));
+        setResult({ tone: "good", text: `Clean start: ${r.applicationsDeleted} applications deleted, ${r.processInstancesCancelled} running processes cancelled.` })));
   };
-
-  const duplicatePayout = (e) => {
-    e.preventDefault();
-    run("payout", () =>
-      api.duplicateDisbursement(payoutId).then((r) =>
-        setResult({ tone: "warn", text: `Second payout for #${payoutId}: ${r.result} - the customer is never paid twice.` })));
-  };
-
-  const active = applications.filter((a) => a.status === "ACTIVE");
 
   return (
     <div>
       <div className="pageHeader withAction">
         <div>
           <h1>Demo panel</h1>
-          <p>Start any scenario in one click, switch failures on and off, and reset the data before the demo.</p>
+          <p>Start any credit-assessment scenario in one click and reset the data before the demo.</p>
         </div>
         <button className="btnDanger" onClick={reset} disabled={busy === "reset"}>
           {busy === "reset" ? "Resetting..." : "↺ Reset test data"}
@@ -81,39 +66,15 @@ function DemoPanel() {
 
       <div className="demoTop">
         <section className="card">
-          <h3 className="cardTitle">Failure switches</h3>
-          <p className="muted small">Simulate an outage of an external system. They stay on until you switch them off.</p>
-          {SWITCHES.map((s) => (
-            <div key={s.name} className="switchRow">
-              <div>
-                <strong>{s.label}</strong>
-                <span className="muted small">{s.useCase} · {s.effect}</span>
-              </div>
-              <button className={"toggle" + (switches[s.name] ? " on" : "")} role="switch" aria-checked={!!switches[s.name]}
-                aria-label={s.label} disabled={busy === s.name} onClick={() => toggle(s.name)}>
-                <span />
-              </button>
-            </div>
-          ))}
+          <h3 className="cardTitle">Release 1 scope</h3>
+          <p className="muted small">
+            This version covers UC01 (application &amp; onboarding) and UC02 (credit assessment). An approved application
+            ends <strong>Approved in principle</strong>. Approval, payout and repayments (UC03-UC04) are on branch us-1.
+          </p>
         </section>
 
         <section className="card">
           <h3 className="cardTitle">Tools</h3>
-          <form className="toolRow" onSubmit={duplicatePayout}>
-            <div>
-              <strong>Duplicate payout (UC03)</strong>
-              <span className="muted small">Ask the bank to pay an active loan a second time - it is blocked.</span>
-            </div>
-            <div className="toolInput">
-              <select value={payoutId} onChange={(e) => setPayoutId(e.target.value)} required>
-                <option value="">Active loan...</option>
-                {active.map((a) => (
-                  <option key={a.id} value={a.id}>#{a.id} {a.firstName} {a.lastName} · {money(a.loanAmount)}</option>
-                ))}
-              </select>
-              <button className="btnSecondary" disabled={!payoutId || busy === "payout"}>Try</button>
-            </div>
-          </form>
           <div className="toolLinks">
             {TOOLS_LINKS.map((l) => (
               <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="btnSecondary">{l.label} ↗</a>

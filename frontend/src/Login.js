@@ -37,11 +37,11 @@ function Login(props) {
           <span className="logo">$</span> MicroLending
         </div>
         <h1>Small loans, simple process.</h1>
-        <p>From application to the last repayment - in one place.</p>
+        <p>Apply online and get a credit decision - in one place.</p>
         <ul>
           <li>📝 Apply online and verify your identity in minutes</li>
           <li>📊 Automated credit and affordability check</li>
-          <li>✍️ Sign electronically, get paid, repay by direct debit</li>
+          <li>✅ Approved in principle within minutes</li>
         </ul>
       </div>
 

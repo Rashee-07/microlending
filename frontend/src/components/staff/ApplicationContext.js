@@ -12,10 +12,9 @@ const Row = ({ label, children }) => (
 
 const OUTCOME_TONE = { APPROVE: "good", REFER: "warn", DECLINE: "bad", FRAUD: "bad" };
 
-/** Everything a staff member needs to decide: applicant, loan request, assessment, documents, loan, activity. */
+/** Everything a staff member needs to decide: applicant, loan request, assessment, documents, activity. */
 function ApplicationContext({ detail }) {
-  const { application: a, customer: c, assessment: s, documents, loanAccount: loan, disbursement, repayments } = detail;
-  const failed = repayments.filter((r) => r.status === "FAILED" || r.status === "COLLECTIONS");
+  const { application: a, customer: c, assessment: s, documents } = detail;
 
   return (
     <div className="context">
@@ -85,22 +84,6 @@ function ApplicationContext({ detail }) {
           )}
         </section>
 
-        {loan && (
-          <section>
-            <h4>Loan account</h4>
-            <Row label="Account">{loan.accountNumber}</Row>
-            <Row label="Principal">{money(loan.principal)}</Row>
-            <Row label="Repayment">{money(loan.monthlyRepayment)} × {loan.termMonths}</Row>
-            <Row label="Outstanding">{money(loan.outstandingBalance)}</Row>
-            <Row label="Agreement">{loan.agreementStatus}</Row>
-            <Row label="Payout">{disbursement ? `${disbursement.status} (${disbursement.bankReference})` : "-"}</Row>
-            {failed.length > 0 && (
-              <Row label="Failed instalments">
-                {failed.map((r) => `#${r.instalmentNo} (${r.attempts} attempts, ${r.lastFailureReason || r.status})`).join(", ")}
-              </Row>
-            )}
-          </section>
-        )}
       </div>
 
       <h4 className="activityTitle">Activity</h4>

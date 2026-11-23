@@ -1,5 +1,7 @@
 // How each application status is shown.
-//   label: text for the customer, tone: badge colour, stage: which use case it belongs to (1-4)
+//   label: text for the customer, tone: badge colour, stage: which step of the tracker it belongs to.
+// Release 1 covers UC01-UC02 and ends at APPROVED_IN_PRINCIPLE. The UC03/UC04 statuses below are kept so
+// applications created by the full version (branch us-1, same database) still display.
 export const STATUS = {
   IN_PROGRESS: { label: "Application in progress", tone: "info", stage: 1 },
   ID_REUPLOAD_REQUIRED: { label: "New ID document needed", tone: "warn", stage: 1 },
@@ -30,15 +32,17 @@ export const STATUS = {
   CLOSED: { label: "Repaid & closed", tone: "good", stage: 4 },
 };
 
-// Statuses after which nothing happens any more
-export const FINAL_STATUSES = ["REJECTED", "EXPIRED", "DECLINED", "OFFER_EXPIRED", "DEFAULTED", "CLOSED"];
+// Statuses after which nothing happens any more (in release 1 an approved application ends approved in principle)
+export const FINAL_STATUSES = ["APPROVED_IN_PRINCIPLE", "REJECTED", "EXPIRED", "DECLINED", "OFFER_EXPIRED", "DEFAULTED", "CLOSED"];
 
-// The four use cases as the customer sees them
+// Successful end states: the tracker shows every step as done
+export const SUCCESS_STATUSES = ["APPROVED_IN_PRINCIPLE", "CLOSED"];
+
+// The steps as the customer sees them in release 1
 export const STAGES = [
   { stage: 1, title: "Apply", detail: "Your details & documents" },
   { stage: 2, title: "Assessment", detail: "Credit & affordability check" },
-  { stage: 3, title: "Approval & payout", detail: "Sign agreement, receive funds" },
-  { stage: 4, title: "Repayments", detail: "Monthly direct debit" },
+  { stage: 3, title: "Approved in principle", detail: "Final approval comes next" },
 ];
 
 export const statusInfo = (status) => STATUS[status] || { label: status, tone: "info", stage: 1 };

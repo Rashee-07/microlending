@@ -18,7 +18,6 @@ const SAMPLES = [
   { label: "Affordable (AUD 3,000)", values: BASE },
   { label: "Payslip missing", values: { ...BASE, incomeDocFileName: "" } },
   { label: "Financial hardship", values: { ...BASE, monthlyExpenses: "4900" } },
-  { label: "Account with no funds", values: { ...BASE, bankAccountNumber: "062000555599" } },
 ];
 
 /** UC01 task capture-financials: income, expenses, liabilities, loan purpose and an income document. */
