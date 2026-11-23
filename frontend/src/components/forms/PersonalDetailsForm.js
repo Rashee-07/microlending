@@ -1,5 +1,6 @@
 import React from "react";
 import { useForm, Field, TaskForm, AU_STATES } from "./FormKit";
+import { suburbsIn, postcodeOf } from "../../constants/auSuburbs";
 
 const EMPTY = {
   firstName: "", lastName: "", dateOfBirth: "", addressLine: "", suburb: "", state: "NSW", postcode: "",
@@ -23,6 +24,12 @@ const SAMPLES = [
 /** UC01 task capture-details. */
 function PersonalDetailsForm({ onSubmit, busy }) {
   const { values, change, setValues } = useForm(EMPTY);
+
+  // State -> suburb -> postcode: a new state clears the suburb, a suburb fills in its postcode.
+  const changeState = (e) => setValues({ ...values, state: e.target.value, suburb: "", postcode: "" });
+  const changeSuburb = (e) =>
+    setValues({ ...values, suburb: e.target.value, postcode: postcodeOf(values.state, e.target.value) });
+
   return (
     <TaskForm
       title="Your details"
@@ -36,13 +43,20 @@ function PersonalDetailsForm({ onSubmit, busy }) {
       <Field label="Last name"><input value={values.lastName} onChange={change("lastName")} required /></Field>
       <Field label="Date of birth"><input type="date" value={values.dateOfBirth} onChange={change("dateOfBirth")} required /></Field>
       <Field label="Street address"><input value={values.addressLine} onChange={change("addressLine")} required /></Field>
-      <Field label="Suburb"><input value={values.suburb} onChange={change("suburb")} required /></Field>
       <Field label="State">
-        <select value={values.state} onChange={change("state")}>
+        <select value={values.state} onChange={changeState}>
           {AU_STATES.map((s) => <option key={s}>{s}</option>)}
         </select>
       </Field>
-      <Field label="Postcode"><input value={values.postcode} onChange={change("postcode")} maxLength={4} required /></Field>
+      <Field label="Suburb">
+        <select value={values.suburb} onChange={changeSuburb} required>
+          <option value="">Select a suburb...</option>
+          {suburbsIn(values.state).map((s) => <option key={s.suburb}>{s.suburb}</option>)}
+        </select>
+      </Field>
+      <Field label="Postcode" hint="Filled in from the suburb">
+        <input value={values.postcode} readOnly />
+      </Field>
       <Field label="Employment">
         <select value={values.employmentStatus} onChange={change("employmentStatus")}>
           <option value="FULL_TIME">Full-time</option>
