@@ -1,0 +1,74 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "# Identity document",
+      "id": "Field_0001"
+    },
+    {
+      "type": "text",
+      "text": "_Normally completed in the MicroLending app. Field keys match the backend (TaskService), so completing it here sends the same variables._",
+      "id": "Field_0002"
+    },
+    {
+      "type": "select",
+      "key": "idType",
+      "label": "Document type",
+      "id": "Field_0003",
+      "values": [
+        {
+          "label": "Passport",
+          "value": "PASSPORT"
+        },
+        {
+          "label": "Driver licence",
+          "value": "DRIVERS_LICENCE"
+        }
+      ],
+      "defaultValue": "PASSPORT",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textfield",
+      "key": "idNumber",
+      "label": "Document number",
+      "id": "Field_0004",
+      "description": "At least 6 characters; a number ending 000 fails verification",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "datetime",
+      "key": "idExpiry",
+      "label": "Expiry date",
+      "id": "Field_0005",
+      "subtype": "date",
+      "dateLabel": "Expiry date",
+      "description": "A date in the past asks for a new document",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textfield",
+      "key": "fileName",
+      "label": "Scan / photo (file name)",
+      "id": "Field_0006",
+      "validate": {
+        "required": true
+      }
+    }
+  ],
+  "type": "default",
+  "id": "upload-identity-form",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.3.0",
+  "exporter": {
+    "name": "MicroLending model generator",
+    "version": "2.0"
+  },
+  "schemaVersion": 12
+}

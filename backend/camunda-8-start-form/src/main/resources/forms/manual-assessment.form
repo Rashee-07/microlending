@@ -1,0 +1,53 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "# Manual credit assessment",
+      "id": "Field_0001"
+    },
+    {
+      "type": "text",
+      "text": "_Normally completed in the MicroLending app. Field keys match the backend (TaskService), so completing it here sends the same variables._",
+      "id": "Field_0002"
+    },
+    {
+      "type": "text",
+      "text": "The automated credit assessment referred this application (missing / inconsistent information or a weak credit history). Review the figures and decide.",
+      "id": "Field_0005"
+    },
+    {
+      "type": "radio",
+      "key": "officerDecision",
+      "label": "Decision",
+      "id": "Field_0003",
+      "values": [
+        {
+          "label": "Approve",
+          "value": "APPROVE"
+        },
+        {
+          "label": "Decline",
+          "value": "DECLINE"
+        }
+      ],
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "key": "comment",
+      "label": "Comment (shown to the customer when declined)",
+      "id": "Field_0004"
+    }
+  ],
+  "type": "default",
+  "id": "manual-assessment-form",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.3.0",
+  "exporter": {
+    "name": "MicroLending model generator",
+    "version": "2.0"
+  },
+  "schemaVersion": 12
+}

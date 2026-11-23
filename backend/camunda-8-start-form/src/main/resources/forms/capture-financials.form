@@ -1,0 +1,159 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "# Your loan and finances",
+      "id": "Field_0001"
+    },
+    {
+      "type": "text",
+      "text": "_Normally completed in the MicroLending app. Field keys match the backend (TaskService), so completing it here sends the same variables._",
+      "id": "Field_0002"
+    },
+    {
+      "type": "number",
+      "key": "loanAmount",
+      "label": "Loan amount (AUD)",
+      "id": "Field_0003",
+      "validate": {
+        "required": true,
+        "min": 500,
+        "max": 50000
+      }
+    },
+    {
+      "type": "select",
+      "key": "loanPurpose",
+      "label": "Loan purpose",
+      "id": "Field_0004",
+      "values": [
+        {
+          "label": "Emergency expense",
+          "value": "Emergency expense"
+        },
+        {
+          "label": "Car repairs",
+          "value": "Car repairs"
+        },
+        {
+          "label": "Medical bills",
+          "value": "Medical bills"
+        },
+        {
+          "label": "Education",
+          "value": "Education"
+        },
+        {
+          "label": "Home improvement",
+          "value": "Home improvement"
+        },
+        {
+          "label": "Debt consolidation",
+          "value": "Debt consolidation"
+        },
+        {
+          "label": "Other",
+          "value": "Other"
+        }
+      ],
+      "defaultValue": "Emergency expense",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "select",
+      "key": "termMonths",
+      "label": "Term",
+      "id": "Field_0005",
+      "values": [
+        {
+          "label": "6 months",
+          "value": "6"
+        },
+        {
+          "label": "12 months",
+          "value": "12"
+        },
+        {
+          "label": "18 months",
+          "value": "18"
+        },
+        {
+          "label": "24 months",
+          "value": "24"
+        }
+      ],
+      "defaultValue": "12",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "number",
+      "key": "monthlyIncome",
+      "label": "Monthly income after tax (AUD)",
+      "id": "Field_0006",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "number",
+      "key": "monthlyExpenses",
+      "label": "Monthly living expenses (AUD)",
+      "id": "Field_0007",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "number",
+      "key": "monthlyLiabilities",
+      "label": "Monthly repayments on other debts (AUD)",
+      "id": "Field_0008"
+    },
+    {
+      "type": "textfield",
+      "key": "bankAccountNumber",
+      "label": "Bank account (BSB + account number)",
+      "id": "Field_0009",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "select",
+      "key": "incomeDocType",
+      "label": "Income document",
+      "id": "Field_0010",
+      "values": [
+        {
+          "label": "Payslip",
+          "value": "PAYSLIP"
+        },
+        {
+          "label": "Bank statement",
+          "value": "BANK_STATEMENT"
+        }
+      ],
+      "defaultValue": "PAYSLIP"
+    },
+    {
+      "type": "textfield",
+      "key": "incomeDocFileName",
+      "label": "Income document file name",
+      "id": "Field_0011",
+      "description": "Leave empty to see \"More information needed\""
+    }
+  ],
+  "type": "default",
+  "id": "capture-financials-form",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.3.0",
+  "exporter": {
+    "name": "MicroLending model generator",
+    "version": "2.0"
+  },
+  "schemaVersion": 12
+}

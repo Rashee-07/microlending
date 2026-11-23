@@ -1,0 +1,171 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "# Your details",
+      "id": "Field_0001"
+    },
+    {
+      "type": "text",
+      "text": "_Normally completed in the MicroLending app. Field keys match the backend (TaskService), so completing it here sends the same variables._",
+      "id": "Field_0002"
+    },
+    {
+      "type": "textfield",
+      "key": "firstName",
+      "label": "First name",
+      "id": "Field_0003",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textfield",
+      "key": "lastName",
+      "label": "Last name",
+      "id": "Field_0004",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "datetime",
+      "key": "dateOfBirth",
+      "label": "Date of birth",
+      "id": "Field_0005",
+      "subtype": "date",
+      "dateLabel": "Date of birth",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textfield",
+      "key": "addressLine",
+      "label": "Street address",
+      "id": "Field_0006",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "select",
+      "key": "state",
+      "label": "State",
+      "id": "Field_0007",
+      "values": [
+        {
+          "label": "NSW",
+          "value": "NSW"
+        },
+        {
+          "label": "VIC",
+          "value": "VIC"
+        },
+        {
+          "label": "QLD",
+          "value": "QLD"
+        },
+        {
+          "label": "WA",
+          "value": "WA"
+        },
+        {
+          "label": "SA",
+          "value": "SA"
+        },
+        {
+          "label": "TAS",
+          "value": "TAS"
+        },
+        {
+          "label": "ACT",
+          "value": "ACT"
+        },
+        {
+          "label": "NT",
+          "value": "NT"
+        }
+      ],
+      "defaultValue": "NSW",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textfield",
+      "key": "suburb",
+      "label": "Suburb",
+      "id": "Field_0008",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textfield",
+      "key": "postcode",
+      "label": "Postcode",
+      "id": "Field_0009",
+      "validate": {
+        "required": true,
+        "minLength": 4,
+        "maxLength": 4
+      }
+    },
+    {
+      "type": "select",
+      "key": "employmentStatus",
+      "label": "Employment",
+      "id": "Field_0010",
+      "values": [
+        {
+          "label": "Full-time",
+          "value": "FULL_TIME"
+        },
+        {
+          "label": "Part-time",
+          "value": "PART_TIME"
+        },
+        {
+          "label": "Casual",
+          "value": "CASUAL"
+        },
+        {
+          "label": "Self-employed",
+          "value": "SELF_EMPLOYED"
+        },
+        {
+          "label": "Not employed",
+          "value": "UNEMPLOYED"
+        }
+      ],
+      "defaultValue": "FULL_TIME",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textfield",
+      "key": "employerName",
+      "label": "Employer",
+      "id": "Field_0011",
+      "description": "An employer containing 'Unknown' is referred in UC02"
+    },
+    {
+      "type": "number",
+      "key": "employmentYears",
+      "label": "Years with employer",
+      "id": "Field_0012",
+      "decimalDigits": 1
+    }
+  ],
+  "type": "default",
+  "id": "capture-details-form",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.3.0",
+  "exporter": {
+    "name": "MicroLending model generator",
+    "version": "2.0"
+  },
+  "schemaVersion": 12
+}

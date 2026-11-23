@@ -21,6 +21,9 @@ const B1 = 0;
 const B2 = 6;
 
 const p = new ProcessModel('microlending-loan', 'MicroLending - loan application (UC01-UC02)');
+// Camunda forms of the user tasks (src/main/resources/forms/<task id>.form), embedded into the BPMN.
+// The MicroLending app renders its own screens; these forms show the same fields in Modeler / Tasklist.
+p.formsDir = path.join(__dirname, '..', 'src', 'main', 'resources', 'forms');
 
 p.add({ id: 'start', type: 'start', name: 'Customer registered (email / mobile)', c: 0, r: B1 + 1, tone: 'good' });
 
@@ -30,18 +33,18 @@ p.add({ id: 'start', type: 'start', name: 'Customer registered (email / mobile)'
 p.sub('uc01', 'Loan application & onboarding', {}, (s) => {
   const r = B1 + 1;
   s.add({ id: 'uc01-start', type: 'start', c: 1, r });
-  s.add({ id: 'capture-details', type: 'user', name: 'Enter personal, address & employment details', c: 2, r, ...CUSTOMER });
-  s.add({ id: 'upload-identity', type: 'user', name: 'Upload identity document', c: 3, r, ...CUSTOMER });
+  s.add({ id: 'capture-details', type: 'user', form: 'capture-details', name: 'Enter personal, address & employment details', c: 2, r, ...CUSTOMER });
+  s.add({ id: 'upload-identity', type: 'user', form: 'upload-identity', name: 'Upload identity document', c: 3, r, ...CUSTOMER });
   s.add({ id: 'verify-identity', type: 'service', job: 'verify-identity', name: 'Verify identity & document', c: 4, r });
   s.add({ id: 'gw-identity', type: 'xgw', name: 'Identity verified?', c: 5, r, labelSide: 'topLeft' });
   s.add({ id: 'uc01-end-identity', type: 'end', name: 'Identity not verified', c: 5, r: r - 1, tone: 'bad' });
   s.add({ id: 'check-duplicate', type: 'service', job: 'check-duplicate', name: 'Check for duplicate customer', c: 6, r });
   s.add({ id: 'gw-duplicate', type: 'xgw', name: 'Duplicate?', c: 7, r });
   s.add({ id: 'uc01-end-duplicate', type: 'end', name: 'Duplicate application', c: 7, r: r - 1, tone: 'bad' });
-  s.add({ id: 'capture-financials', type: 'user', name: 'Enter income, expenses, debts & loan purpose', c: 8, r, ...CUSTOMER });
+  s.add({ id: 'capture-financials', type: 'user', form: 'capture-financials', name: 'Enter income, expenses, debts & loan purpose', c: 8, r, ...CUSTOMER });
   s.add({ id: 'validate-application', type: 'service', job: 'validate-application', name: 'Validate mandatory information', c: 9, r });
   s.add({ id: 'gw-complete', type: 'xgw', name: 'Information complete?', c: 10, r });
-  s.add({ id: 'upload-income-docs', type: 'user', name: 'Upload missing income documents', c: 10, r: r + 1.1, ...CUSTOMER });
+  s.add({ id: 'upload-income-docs', type: 'user', form: 'upload-income-docs', name: 'Upload missing income documents', c: 10, r: r + 1.1, ...CUSTOMER });
   s.add({ id: 'uc01-end', type: 'end', name: 'Application complete', c: 11, r });
 });
 p.flow('uc01-start', 'capture-details');
@@ -106,8 +109,8 @@ p.sub('uc02', 'UC02 - Automated credit assessment', {}, (s) => {
   s.add({ id: 'credit-decision', type: 'rule', decision: 'credit-decision', result: 'creditDecision', name: 'Credit decision (DMN)', c: 6, r });
   s.add({ id: 'record-assessment', type: 'service', job: 'record-assessment', name: 'Record decision', c: 7, r });
   s.add({ id: 'gw-decision', type: 'xgw', name: 'Outcome?', c: 8, r });
-  s.add({ id: 'fraud-investigation', type: 'user', group: 'fraud-team', name: 'Fraud investigation', c: 9, r: r - 1 });
-  s.add({ id: 'manual-assessment', type: 'user', group: 'credit-officer', name: 'Manual assessment (credit officer)', c: 9, r: r + 1 });
+  s.add({ id: 'fraud-investigation', type: 'user', form: 'fraud-investigation', group: 'fraud-team', name: 'Fraud investigation', c: 9, r: r - 1 });
+  s.add({ id: 'manual-assessment', type: 'user', form: 'manual-assessment', group: 'credit-officer', name: 'Manual assessment (credit officer)', c: 9, r: r + 1 });
   s.add({ id: 'uc02-end', type: 'end', name: 'Assessment complete', c: 10, r });
 });
 p.flow('uc02-start', 'retrieve-customer');

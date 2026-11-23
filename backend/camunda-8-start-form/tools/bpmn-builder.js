@@ -5,6 +5,9 @@
 //
 // Usage: see generate-models.js
 
+const fs = require('fs');
+const path = require('path');
+
 const COL = 190; // px between columns
 const ROW = 140; // px between rows
 const X0 = 160;
@@ -72,6 +75,13 @@ class ProcessModel {
     this.flows = [];
     this.messages = new Map();
     this.errors = new Map();
+    /** Folder with the Camunda form files (name.form) that user tasks refer to with `form: 'name'`. */
+    this.formsDir = null;
+  }
+
+  /** Camunda 8.3 has no linked forms yet: each user task's form is embedded in the process (zeebe:userTaskForm). */
+  static formElementId(name) {
+    return 'UserTaskForm_' + name.replace(/[^A-Za-z0-9]/g, '_');
   }
 
   // ---- nodes -------------------------------------------------------------
@@ -307,7 +317,10 @@ class ProcessModel {
       case 'user': {
         const a = n.assignee ? ` assignee="${esc(n.assignee)}"` : '';
         const g = n.group ? ` candidateGroups="${esc(n.group)}"` : '';
-        const inner = `${i}    <zeebe:assignmentDefinition${a}${g} />\n`;
+        const form = n.form
+          ? `${i}    <zeebe:formDefinition formKey="camunda-forms:bpmn:${ProcessModel.formElementId(n.form)}" />\n`
+          : '';
+        const inner = `${form}${i}    <zeebe:assignmentDefinition${a}${g} />\n`;
         return `${i}<bpmn:userTask id="${n.id}"${nm}>\n${doc}${ext(inner)}${io}${i}</bpmn:userTask>\n`;
       }
       case 'rule': {
@@ -397,7 +410,18 @@ class ProcessModel {
     for (const n of this.nodes.values()) {
       if (n.type === 'boundary') n.parent = this.nodes.get(n.attachedTo).parent;
     }
-    let body = '';
+    // embedded forms of the user tasks (one per form file, read from formsDir)
+    const formNames = [...new Set([...this.nodes.values()].filter((n) => n.type === 'user' && n.form).map((n) => n.form))];
+    if (formNames.length && !this.formsDir) throw new Error('user tasks refer to forms but formsDir is not set');
+    let forms = '';
+    for (const name of formNames) {
+      const json = fs.readFileSync(path.join(this.formsDir, name + '.form'), 'utf8').trim();
+      JSON.parse(json); // fail early on a broken form file
+      forms += `      <zeebe:userTaskForm id="${ProcessModel.formElementId(name)}">${esc(json)}</zeebe:userTaskForm>\n`;
+    }
+    const processExt = forms ? `    <bpmn:extensionElements>\n${forms}    </bpmn:extensionElements>\n` : '';
+
+    let body = processExt;
     for (const n of this.nodes.values()) if (n.parent === null) body += this.nodeXml(n, 4);
     for (const f of this.flows) if (this.nodes.get(f.from).parent === null) body += this.flowXml(f, 4);
 

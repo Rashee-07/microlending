@@ -1,0 +1,53 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "# Fraud investigation",
+      "id": "Field_0001"
+    },
+    {
+      "type": "text",
+      "text": "_Normally completed in the MicroLending app. Field keys match the backend (TaskService), so completing it here sends the same variables._",
+      "id": "Field_0002"
+    },
+    {
+      "type": "text",
+      "text": "The credit bureau returned a high-risk fraud indicator. Investigate the applicant before the application can continue.",
+      "id": "Field_0005"
+    },
+    {
+      "type": "radio",
+      "key": "fraudConfirmed",
+      "label": "Outcome",
+      "id": "Field_0003",
+      "values": [
+        {
+          "label": "Cleared - not fraud",
+          "value": "false"
+        },
+        {
+          "label": "Confirm fraud",
+          "value": "true"
+        }
+      ],
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "key": "comment",
+      "label": "Comment (shown to the customer when fraud is confirmed)",
+      "id": "Field_0004"
+    }
+  ],
+  "type": "default",
+  "id": "fraud-investigation-form",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.3.0",
+  "exporter": {
+    "name": "MicroLending model generator",
+    "version": "2.0"
+  },
+  "schemaVersion": 12
+}

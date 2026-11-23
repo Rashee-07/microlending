@@ -1,0 +1,52 @@
+{
+  "components": [
+    {
+      "type": "text",
+      "text": "# Upload your income document",
+      "id": "Field_0001"
+    },
+    {
+      "type": "text",
+      "text": "_Normally completed in the MicroLending app. Field keys match the backend (TaskService), so completing it here sends the same variables._",
+      "id": "Field_0002"
+    },
+    {
+      "type": "select",
+      "key": "incomeDocType",
+      "label": "Document type",
+      "id": "Field_0003",
+      "values": [
+        {
+          "label": "Payslip",
+          "value": "PAYSLIP"
+        },
+        {
+          "label": "Bank statement",
+          "value": "BANK_STATEMENT"
+        }
+      ],
+      "defaultValue": "PAYSLIP",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "type": "textfield",
+      "key": "incomeDocFileName",
+      "label": "File name",
+      "id": "Field_0004",
+      "validate": {
+        "required": true
+      }
+    }
+  ],
+  "type": "default",
+  "id": "upload-income-docs-form",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.3.0",
+  "exporter": {
+    "name": "MicroLending model generator",
+    "version": "2.0"
+  },
+  "schemaVersion": 12
+}
