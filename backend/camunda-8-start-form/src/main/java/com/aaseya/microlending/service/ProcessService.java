@@ -39,7 +39,7 @@ public class ProcessService {
   /**
    * Starts the loan process for an application (adds applicationId, the demo timers and an empty close reason).
    *
-   * @param startAt null = from the beginning (UC01); otherwise a stage id (uc02, uc03, uc04) to start there
+   * @param startAt null = from the beginning (UC01); otherwise a stage id (uc02) to start there
    */
   public long startLoanProcess(long applicationId, Map<String, Object> variables, String startAt) {
     Map<String, Object> vars = new HashMap<>(variables);

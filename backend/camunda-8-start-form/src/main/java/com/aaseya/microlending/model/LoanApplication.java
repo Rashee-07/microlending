@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 import com.aaseya.microlending.model.enums.ApplicationStatus;
 
-/** Row of table application: one loan application, followed from UC01 to UC04. */
+/** Row of table application: one loan application, followed through UC01 and UC02 (release 1). */
 public record LoanApplication(
     Long id,
     Long customerId,

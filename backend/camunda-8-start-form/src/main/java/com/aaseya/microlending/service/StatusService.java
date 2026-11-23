@@ -33,7 +33,7 @@ public class StatusService {
   }
 
   /**
-   * The single place where an application is stopped (rejected in UC01, declined in UC02/UC03, offer expired):
+   * The single place where an application is stopped (rejected or expired in UC01, declined in UC02):
    * final status, reason for the customer, open tasks cancelled.
    */
   public void closeApplication(long applicationId, ApplicationStatus status, String reason) {
