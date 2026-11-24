@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Send every download to Maven Central. Some Camunda dependencies declare extra repositories
+  (artifacts.camunda.com, repository.jboss.org, repo.spring.io/plugins-release); Maven tries each one
+  for every artifact and repo.spring.io now needs a login, which made clean builds (CI, Docker) take
+  over 15 minutes. Everything this project needs is on Maven Central.
+  Used automatically through .mvn/maven.config.
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+  <mirrors>
+    <mirror>
+      <id>central-only</id>
+      <name>Maven Central for all repositories</name>
+      <mirrorOf>*</mirrorOf>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </mirror>
+  </mirrors>
+</settings>

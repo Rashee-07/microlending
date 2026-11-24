@@ -10,6 +10,7 @@ FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /src
 # Download dependencies first so they are cached until pom.xml changes
 COPY pom.xml .
+COPY .mvn/settings.xml .mvn/maven.config ./.mvn/
 RUN mvn -B -q dependency:go-offline
 COPY src ./src
 # Tests already run in the CI "backend" job
