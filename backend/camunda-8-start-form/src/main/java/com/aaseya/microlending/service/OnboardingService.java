@@ -87,6 +87,10 @@ public class OnboardingService {
     if (form.idType() == null || !form.idType().isIdentityDocument()) {
       throw new BusinessException("idType must be PASSPORT or DRIVERS_LICENCE");
     }
+    if (isBlank(form.fileName())) {
+      // the task stays open: identity cannot be verified without a scan / photo of the document
+      throw new BusinessException("Please upload your passport or driver licence");
+    }
     documentDao.create(applicationId, form.idType(), form.idNumber(), form.idExpiry(), form.fileName());
     applicationDao.updateStatus(applicationId, ApplicationStatus.IN_PROGRESS, null);
   }
